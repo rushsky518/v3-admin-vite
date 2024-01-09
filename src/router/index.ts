@@ -129,6 +129,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "Vxe Table",
           keepAlive: true
         }
+      },
+      {
+        path: "room-table",
+        component: () => import("@/views/table/room/index.vue"),
+        name: "rommTable",
+        meta: {
+          title: "Room Table",
+          keepAlive: true
+        }
       }
     ]
   },
