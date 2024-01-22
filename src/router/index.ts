@@ -103,6 +103,35 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/house",
+    component: Layouts,
+    name: "House",
+    meta: {
+      title: "房屋管理",
+      elIcon: "Grid"
+    },
+    children: [
+      {
+        path: "building-table",
+        component: () => import("@/views/house/room/index.vue"),
+        name: "buildingTable",
+        meta: {
+          title: "楼栋",
+          keepAlive: true
+        }
+      },
+      {
+        path: "room-table",
+        component: () => import("@/views/house/room/index.vue"),
+        name: "rommTable",
+        meta: {
+          title: "房间",
+          keepAlive: true
+        }
+      }
+    ]
+  },
+  {
     path: "/table",
     component: Layouts,
     redirect: "/table/element-plus",
@@ -127,15 +156,6 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "VxeTable",
         meta: {
           title: "Vxe Table",
-          keepAlive: true
-        }
-      },
-      {
-        path: "room-table",
-        component: () => import("@/views/table/room/index.vue"),
-        name: "rommTable",
-        meta: {
-          title: "Room Table",
           keepAlive: true
         }
       }
