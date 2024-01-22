@@ -56,7 +56,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "首页",
           svgIcon: "dashboard",
-          affix: true
+          affix: true,
+          // keepAlive: true
         }
       }
     ]
@@ -129,15 +130,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           keepAlive: true
         }
       },
-      {
-        path: "time",
-        component: () => import("@/views/house/time/index.vue"),
-        name: "time",
-        meta: {
-          title: "时间",
-          keepAlive: true
-        }
-      }
+      // {
+      //   path: "time",
+      //   component: () => import("@/views/house/time/index.vue"),
+      //   name: "time",
+      //   meta: {
+      //     title: "时间",
+      //     keepAlive: true
+      //   }
+      // }
     ]
   },
   {
