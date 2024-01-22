@@ -128,6 +128,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "房间",
           keepAlive: true
         }
+      },
+      {
+        path: "time",
+        component: () => import("@/views/house/time/index.vue"),
+        name: "time",
+        meta: {
+          title: "时间",
+          keepAlive: true
+        }
       }
     ]
   },
