@@ -21,5 +21,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div>{{ currentTime  }}</div>
+  <div>
+    <h1> {{ currentTime  }}</h1>
+  </div>
+   
 </template>

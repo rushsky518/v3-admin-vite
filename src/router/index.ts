@@ -114,7 +114,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: "building-table",
-        component: () => import("@/views/house/room/index.vue"),
+        component: () => import("@/views/house/building/index.vue"),
         name: "buildingTable",
         meta: {
           title: "楼栋",

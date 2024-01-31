@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { type GetRoomData } from "@/api/Room/types/room"
+import {  getRoomDataApi } from "@/api/room"
+import { type GetRoomData } from "@/api/room/types/room"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -47,19 +48,28 @@ const handleUpdate = (row: GetRoomData) => {
 //#endregion
 
 //#region 查
+const roomData = ref<GetRoomData[]>([])
 
-const roomData: GetRoomData[] = (() => {
-  const arr: GetRoomData[] = [];
-  
-  for (let index = 1; index < 10; index++) {
-    arr.push({
-      id: 'zhang',
-      roomNum: 600 + index,
-      size: 23,
-    });
-  }
-  return arr;
-})();
+const getRoomData = () => {
+  loading.value = true
+  getRoomDataApi({
+    currentPage: paginationData.currentPage,
+    size: paginationData.pageSize,
+    username: searchData.username || undefined,
+    phone: searchData.phone || undefined
+  })
+    .then((res) => {
+      paginationData.total = res.data.total
+      roomData.value = res.data.list
+    })
+    .catch(() => {
+      roomData.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
 
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
@@ -104,7 +114,8 @@ const searchData = reactive({
         <el-table :data="roomData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="roomNum" label="房间号" align="center" />
-          <el-table-column prop="size" label="面积" align="center"/>
+          <el-table-column prop="roomSize" label="面积" align="center"/>
+          <el-table-column prop="rent" label="租金" align="center"/>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>

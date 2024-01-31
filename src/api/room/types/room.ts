@@ -23,7 +23,8 @@ export interface GetRoomRequestData {
 export interface GetRoomData {
   id: string
   roomNum: number
-  size: number
+  roomSize: number
+  rent: number
 }
 
 export type GetRoomResponseData = ApiResponseData<{
