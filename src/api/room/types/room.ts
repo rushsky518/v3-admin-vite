@@ -21,8 +21,9 @@ export interface GetRoomRequestData {
 }
 
 export interface GetRoomData {
-  id: string
-  roomNum: number
+  id: number
+  buildingId: number
+  roomNum: String
   roomSize: number
   rent: number
 }

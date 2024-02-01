@@ -48,6 +48,10 @@ const handleUpdate = (row: GetRoomData) => {
 //#endregion
 
 //#region 查
+const handleSearch = () => {
+  paginationData.currentPage === 1 ? getRoomData() : (paginationData.currentPage = 1)
+}
+
 const roomData = ref<GetRoomData[]>([])
 
 const getRoomData = () => {
