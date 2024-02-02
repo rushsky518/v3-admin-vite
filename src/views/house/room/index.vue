@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import {  getRoomDataApi } from "@/api/room"
+import {  getRoomDataApi,createRoomDataApi,updateRoomDataApi } from "@/api/room"
 import { type GetRoomData } from "@/api/room/types/room"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+import { nextTick } from "process"
 
 defineOptions({
   // 命名当前组件
@@ -18,21 +19,54 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  username: "",
-  password: ""
+  roomNum: "",
+  roomSize: "",
+  rent: ""
 })
+
 const formRules: FormRules = reactive({
-  username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
-  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+  roomNum: [{ required: true, trigger: "blur", message: "请输入房间号" }],
+  roomSize: [{ required: true, trigger: "blur", message: "请输入房间面积" }],
+  rent: [{ required: true, trigger: "blur", message: "请输入租金" }]
 })
+
 const handleCreate = () => {
-  // formRef.value?.validate((valid: boolean, fields) => {
-  // })
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (valid) {
+      if (currentUpdateId.value === undefined) {
+        createRoomDataApi(formData)
+          .then(() => {
+            ElMessage.success("新增成功")
+            getRoomData()
+          })
+          .finally(() => {
+            dialogVisible.value = false
+          })
+      } else {
+        updateRoomDataApi({
+          id: currentUpdateId.value,
+          roomSize: formData.roomSize,
+          rent: formData.rent,
+        })
+          .then(() => {
+            ElMessage.success("修改成功")
+            getRoomData()
+          })
+          .finally(() => {
+            dialogVisible.value = false
+          })
+      }
+    } else {
+      console.error("表单校验不通过", fields)
+    }
+  })
 }
+
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.username = ""
-  formData.password = ""
+  formData.roomNum = ""
+  formData.roomSize = ""
+  formData.rent = ""
 }
 //#endregion
 
@@ -43,7 +77,12 @@ const handleDelete = (row: GetRoomData) => {
 
 //#region 改
 const currentUpdateId = ref<undefined | string>(undefined)
+
 const handleUpdate = (row: GetRoomData) => {
+  currentUpdateId.value = row.id
+  formData.roomSize = row.roomSize
+  formData.rent = row.rent
+  dialogVisible.value = true
 }
 //#endregion
 
@@ -59,8 +98,8 @@ const getRoomData = () => {
   getRoomDataApi({
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
-    username: searchData.username || undefined,
-    phone: searchData.phone || undefined
+    buildingId: searchData.buildingId || undefined,
+    roomNum: searchData.roomNum || undefined
   })
     .then((res) => {
       paginationData.total = res.data.total
@@ -77,10 +116,19 @@ const getRoomData = () => {
 
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  username: "",
-  phone: ""
+  buildingId: "",
+  roomNum: ""
 })
 
+const resetSearch = () => {
+    // searchFormRef.value?.resetFields();
+    searchData.buildingId ='';
+    searchData.roomNum ='';
+  // handleSearch()
+}
+
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoomData, { immediate: true })
 </script>
 
 <template>
@@ -88,10 +136,10 @@ const searchData = reactive({
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
         <el-form-item prop="username" label="楼栋号">
-          <el-input v-model="searchData.username" placeholder="请输入" />
+          <el-input v-model="searchData.buildingId" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="phone" label="房间号">
-          <el-input v-model="searchData.phone" placeholder="请输入" />
+          <el-input v-model="searchData.roomNum" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -144,16 +192,19 @@ const searchData = reactive({
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="currentUpdateId === undefined ? '新增用户' : '修改用户'"
+      :title="currentUpdateId === undefined ? '新增房间' : '修改房间'"
       @close="resetForm"
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="username" label="房间号">
-          <el-input v-model="formData.username" placeholder="请输入" />
+        <el-form-item prop="roomNum" label="房间号" v-if="currentUpdateId === undefined">
+          <el-input v-model="formData.roomNum" placeholder="请输入"/>
         </el-form-item>
-        <el-form-item prop="password" label="面积" v-if="currentUpdateId === undefined">
-          <el-input v-model="formData.password" placeholder="请输入" />
+        <el-form-item prop="roomSize" label="面积" >
+          <el-input v-model="formData.roomSize" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="rent" label="租金">
+          <el-input v-model="formData.rent" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>

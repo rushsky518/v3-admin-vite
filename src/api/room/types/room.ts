@@ -1,6 +1,7 @@
 export interface CreateRoomRequestData {
-  username: string
-  password: string
+  roomNum: string
+  roomSize: string
+  rent: string
 }
 
 export interface UpdateRoomRequestData {
