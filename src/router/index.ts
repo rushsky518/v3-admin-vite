@@ -142,12 +142,68 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/table",
+    path: "/expense",
+    component: Layouts,
+    name: "Expense",
+    meta: {
+      title: "费用管理",
+      elIcon: "Grid"
+    },
+    children: [
+      {
+        path: "cost-table",
+        component: () => import("@/views/house/building/index.vue"),
+        name: "costTable",
+        meta: {
+          title: "成本项",
+          keepAlive: true
+        }
+      },
+      {
+        path: "cost-table",
+        component: () => import("@/views/house/building/index.vue"),
+        name: "costTable",
+        meta: {
+          title: "押金管理",
+          keepAlive: true
+        }
+      },
+      {
+        path: "paid-bill",
+        component: () => import("@/views/house/building/index.vue"),
+        name: "paidBill",
+        meta: {
+          title: "成本账单明细",
+          keepAlive: true
+        }
+      },
+      {
+        path: "tenant-bill",
+        component: () => import("@/views/house/building/index.vue"),
+        name: "tenantBill",
+        meta: {
+          title: "租户账单明细",
+          keepAlive: true
+        }
+      },
+      {
+        path: "tenant-bill",
+        component: () => import("@/views/house/building/index.vue"),
+        name: "tenantBill",
+        meta: {
+          title: "合计账单",
+          keepAlive: true
+        }
+      }
+    ]
+  },
+  {
+    path: "/tenant",
     component: Layouts,
     redirect: "/table/element-plus",
-    name: "Table",
+    name: "Tenant",
     meta: {
-      title: "表格",
+      title: "租客管理",
       elIcon: "Grid"
     },
     children: [

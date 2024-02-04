@@ -16,12 +16,22 @@ const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 //#region 增
-const dialogVisible = ref<boolean>(false)
+const roomDialogVisible = ref<boolean>(false)
+const billDialogVisible = ref<boolean>(false)
+
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
   roomNum: "",
   roomSize: "",
   rent: ""
+})
+
+const billFormData = reactive({
+  roomNum: "",
+  roomSize: "",
+  rent: "",
+  pledge: "",
+  month: ""
 })
 
 const formRules: FormRules = reactive({
@@ -40,7 +50,7 @@ const handleCreate = () => {
             getRoomData()
           })
           .finally(() => {
-            dialogVisible.value = false
+            roomDialogVisible.value = false
           })
       } else {
         updateRoomDataApi({
@@ -56,13 +66,17 @@ const handleCreate = () => {
             getRoomData()
           })
           .finally(() => {
-            dialogVisible.value = false
+            roomDialogVisible.value = false
           })
       }
     } else {
       console.error("表单校验不通过", fields)
     }
   })
+}
+
+const handleCreateBill = () => {
+
 }
 
 const resetForm = () => {
@@ -89,7 +103,19 @@ const handleUpdate = (row: GetRoomData) => {
   formData.tenantName = row.tenantName
   formData.tenantPhone = row.tenantPhone
   formData.free = row.free.toString()
-  dialogVisible.value = true
+  roomDialogVisible.value = true
+}
+
+const handleAddBill = (row: GetRoomData) => {
+  // 点击修改，表单赋初始的值
+  currentUpdateId.value = row.id
+  billFormData.roomNum = row.roomNum
+  billFormData.roomSize = row.roomSize
+  billFormData.rent = row.rent
+  billFormData.tenantName = row.tenantName
+  billFormData.tenantPhone = row.tenantPhone
+  billFormData.free = row.free.toString()
+  billDialogVisible.value = true
 }
 //#endregion
 
@@ -153,12 +179,13 @@ const freeOptions = [{
 }]
 
 const statusFormat = (row, column) => {
-    if (row.free === 1) {
-      return '空置'
-    } else  {
-      return '已出租'
-    } 
-  }
+  if (row.free === 1) {
+    return '空置'
+  } else  {
+    return '已出租'
+  } 
+}
+
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoomData, { immediate: true })
@@ -200,7 +227,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增房间</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="roomDialogVisible = true">新增房间</el-button>
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -223,9 +250,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
           <el-table-column prop="free" label="状态" align="center" :formatter="statusFormat">       
           </el-table-column>
 
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column fixed="right" label="操作" width="240" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="primary" text bg size="small" @click="handleAddBill(scope.row)">生成账单</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -244,9 +272,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         />
       </div>
     </el-card>
-    <!-- 新增/修改 -->
+    <!-- 新增/修改房间 -->
     <el-dialog
-      v-model="dialogVisible"
+      v-model="roomDialogVisible"
       :title="currentUpdateId === undefined ? '新增房间' : '修改房间'"
       @close="resetForm"
       width="30%"
@@ -280,8 +308,44 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="roomDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
+      </template>
+    </el-dialog>
+    <!-- 生成账单 -->
+    <el-dialog v-model="billDialogVisible"
+      :title="'新增账单'"
+      @close="resetForm"
+      width="30%">
+      <el-form ref="formRef" :model="billFormData" :rules="formRules" label-width="100px" label-position="left">
+        <el-form-item prop="roomNum" label="房间号">
+          <el-input v-model="billFormData.roomNum" readonly="true"/>
+        </el-form-item>
+        <el-form-item prop="roomSize" label="面积" >
+          <el-input v-model="billFormData.roomSize" readonly="true" />
+        </el-form-item>
+        <el-form-item prop="rent" label="租金">
+          <el-input v-model="billFormData.rent" readonly="true" />
+        </el-form-item>
+        <el-form-item prop="tenantName" label="租户姓名" >
+          <el-input v-model="billFormData.tenantName" readonly="true" />
+        </el-form-item>
+        <el-form-item prop="tenantPhone" label="租户手机">
+          <el-input v-model="billFormData.tenantPhone" readonly="true" />
+        </el-form-item>
+        <el-form-item prop="pledge" label="押金">
+          <el-input v-model="billFormData.pledge"/>
+        </el-form-item>
+        <el-form-item prop="month" label="时间">
+          <el-date-picker v-model="billFormData.month" 
+            type="month" placeholder="选择月份" :default-value="new Date()">
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="billDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateBill">确认</el-button>
       </template>
     </el-dialog>
   </div>
