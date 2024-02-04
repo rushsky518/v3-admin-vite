@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
+import {  getBuildingDataApi,createBuildingDataApi,updateBuildingDataApi } from "@/api/building"
 import { type GetBuildingData } from "@/api/building/types/building"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
@@ -17,16 +18,45 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  username: "",
-  password: ""
+  buildingNum: "",
+  rooms: "",
+  address: ""
 })
 const formRules: FormRules = reactive({
-  username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
-  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+  // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
+  // password: [{ required: true, trigger: "blur", message: "请输入密码" }]
 })
 const handleCreate = () => {
-  // formRef.value?.validate((valid: boolean, fields) => {
-  // })
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (valid) {
+      if (currentUpdateId.value === undefined) {
+        createBuildingDataApi(formData)
+          .then(() => {
+            ElMessage.success("新增成功")
+            getBuildingData()
+          })
+          .finally(() => {
+            dialogVisible.value = false
+          })
+      } else {
+        updateBuildingDataApi({
+          id: currentUpdateId.value,
+          rooms: formData.rooms,
+          address: formData.address,
+        })
+          .then(() => {
+            ElMessage.success("修改成功")
+            getBuildingData()
+          })
+          .finally(() => {
+            dialogVisible.value = false
+          })
+      }
+    } else {
+      console.error("表单校验不通过", fields)
+    }
+  })
+
 }
 const resetForm = () => {
   currentUpdateId.value = undefined
@@ -36,46 +66,58 @@ const resetForm = () => {
 //#endregion
 
 //#region 删
-const handleDelete = (row: GetRoomData) => {
+const handleDelete = (row: GetBuildingData) => {
 }
 //#endregion
 
 //#region 改
 const currentUpdateId = ref<undefined | string>(undefined)
-const handleUpdate = (row: GetRoomData) => {
+const handleUpdate = (row: GetBuildingData) => {
 }
 //#endregion
 
 //#region 查
+const handleSearch = () => {
+  paginationData.currentPage === 1 ? getBuildingData() : (paginationData.currentPage = 1)
+}
 
-const buildingData: GetBuildingData[] = (() => {
-  const arr: GetBuildingData[] = [];
-  
-  for (let index = 1; index < 10; index++) {
-    arr.push({
-      id: 'zhang',
-      buildingNum: 100 + index,
-      rooms: 48,
-      address:"广东省深圳市"
-    });
-  }
-  return arr;
-})();
+
+const buildingData = ref<GetBuildingData[]>([])
+
+const getBuildingData = () => {
+  loading.value = true
+  getBuildingDataApi({
+    currentPage: paginationData.currentPage,
+    size: paginationData.pageSize,
+    buildingNum: searchData.buildingNum || undefined
+  })
+    .then((res) => {
+      paginationData.total = res.data.total
+      buildingData.value = res.data.list
+    })
+    .catch(() => {
+      buildingData.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
 
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  username: "",
-  phone: ""
+  buildingNum: ""
 })
 
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuildingData, { immediate: true })
 </script>
 
 <template>
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="username" label="楼栋号">
-          <el-input v-model="searchData.username" placeholder="请输入" />
+        <el-form-item prop="buildingNum" label="楼栋号">
+          <el-input v-model="searchData.buildingNum" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -128,16 +170,19 @@ const searchData = reactive({
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="currentUpdateId === undefined ? '新增用户' : '修改用户'"
+      :title="currentUpdateId === undefined ? '新增楼栋' : '修改楼栋'"
       @close="resetForm"
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="username" label="楼栋号">
-          <el-input v-model="formData.username" placeholder="请输入" />
+        <el-form-item prop="buildingNum" label="楼栋号">
+          <el-input v-model="formData.buildingNum" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="password" label="房间数" v-if="currentUpdateId === undefined">
-          <el-input v-model="formData.password" placeholder="请输入" />
+        <el-form-item prop="rooms" label="房间数" v-if="currentUpdateId === undefined">
+          <el-input v-model="formData.rooms" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="address" label="地址" v-if="currentUpdateId === undefined">
+          <el-input v-model="formData.address" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>

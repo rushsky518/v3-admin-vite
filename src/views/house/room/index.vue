@@ -47,6 +47,9 @@ const handleCreate = () => {
           id: currentUpdateId.value,
           roomSize: formData.roomSize,
           rent: formData.rent,
+          tenantName: formData.tenantName,
+          tenantPhone: formData.tenantPhone,
+          free: formData.free
         })
           .then(() => {
             ElMessage.success("修改成功")
@@ -79,9 +82,13 @@ const handleDelete = (row: GetRoomData) => {
 const currentUpdateId = ref<undefined | string>(undefined)
 
 const handleUpdate = (row: GetRoomData) => {
+  // 点击修改，表单赋初始的值
   currentUpdateId.value = row.id
   formData.roomSize = row.roomSize
   formData.rent = row.rent
+  formData.tenantName = row.tenantName
+  formData.tenantPhone = row.tenantPhone
+  formData.free = row.free.toString()
   dialogVisible.value = true
 }
 //#endregion
@@ -99,7 +106,8 @@ const getRoomData = () => {
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
     buildingId: searchData.buildingId || undefined,
-    roomNum: searchData.roomNum || undefined
+    roomNum: searchData.roomNum || undefined,
+    free: searchData.free || undefined,
   })
     .then((res) => {
       paginationData.total = res.data.total
@@ -117,15 +125,40 @@ const getRoomData = () => {
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
   buildingId: "",
-  roomNum: ""
+  roomNum: "",
+  free: "",
 })
 
 const resetSearch = () => {
-    // searchFormRef.value?.resetFields();
-    searchData.buildingId ='';
-    searchData.roomNum ='';
-  // handleSearch()
+  // searchFormRef.value?.resetFields();
+  searchData.buildingId ='';
+  searchData.roomNum ='';
+  handleSearch()
 }
+
+const buildingOptions = [{
+  value: '1',
+  label: '深圳盐田'
+}, {
+  value: '2',
+  label: '福田华强南'
+}]
+
+const freeOptions = [{
+  value: '0',
+  label: '已出租'
+}, {
+  value: '1',
+  label: '空置'
+}]
+
+const statusFormat = (row, column) => {
+    if (row.free === 1) {
+      return '空置'
+    } else  {
+      return '已出租'
+    } 
+  }
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoomData, { immediate: true })
@@ -136,10 +169,27 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
         <el-form-item prop="username" label="楼栋号">
-          <el-input v-model="searchData.buildingId" placeholder="请输入" />
+          <el-select v-model="searchData.buildingId" clearable placeholder="请选择">
+            <el-option
+              v-for="item in buildingOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item prop="phone" label="房间号">
           <el-input v-model="searchData.roomNum" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="free" label="状态">
+          <el-select v-model="searchData.free" clearable placeholder="请选择">
+              <el-option
+                v-for="item in freeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>      
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -168,6 +218,11 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
           <el-table-column prop="roomNum" label="房间号" align="center" />
           <el-table-column prop="roomSize" label="面积" align="center"/>
           <el-table-column prop="rent" label="租金" align="center"/>
+          <el-table-column prop="tenantName" label="租户" align="center"/>
+          <el-table-column prop="tenantPhone" label="手机" align="center"/>
+          <el-table-column prop="free" label="状态" align="center" :formatter="statusFormat">       
+          </el-table-column>
+
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
@@ -206,7 +261,24 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="rent" label="租金">
           <el-input v-model="formData.rent" placeholder="请输入" />
         </el-form-item>
+        <el-form-item prop="tenantName" label="租户姓名" >
+          <el-input v-model="formData.tenantName" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="tenantPhone" label="租户手机">
+          <el-input v-model="formData.tenantPhone" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="free" label="状态">
+          <el-select v-model="formData.free" clearable placeholder="请选择">
+              <el-option
+                v-for="item in freeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>   
+        </el-form-item>
       </el-form>
+
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
@@ -238,3 +310,4 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
   justify-content: flex-end;
 }
 </style>
+
