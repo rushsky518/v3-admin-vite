@@ -73,6 +73,12 @@ const handleDelete = (row: GetBuildingData) => {
 //#region 改
 const currentUpdateId = ref<undefined | string>(undefined)
 const handleUpdate = (row: GetBuildingData) => {
+  // 点击修改，表单赋初始的值
+  currentUpdateId.value = row.id
+  formData.buildingNum = row.buildingNum
+  formData.rooms = row.rooms
+  formData.address = row.address
+  dialogVisible.value = true
 }
 //#endregion
 
@@ -178,10 +184,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuil
         <el-form-item prop="buildingNum" label="楼栋号">
           <el-input v-model="formData.buildingNum" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="rooms" label="房间数" v-if="currentUpdateId === undefined">
+        <el-form-item prop="rooms" label="房间数" >
           <el-input v-model="formData.rooms" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="address" label="地址" v-if="currentUpdateId === undefined">
+        <el-form-item prop="address" label="地址">
           <el-input v-model="formData.address" placeholder="请输入" />
         </el-form-item>
       </el-form>

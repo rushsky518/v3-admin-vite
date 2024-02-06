@@ -26,6 +26,13 @@ const formData = reactive({
   rent: ""
 })
 
+const resetForm = () => {
+  currentUpdateId.value = undefined
+  formData.roomNum = ""
+  formData.roomSize = ""
+  formData.rent = ""
+}
+
 const billFormData = reactive({
   roomNum: "",
   roomSize: "",
@@ -33,6 +40,15 @@ const billFormData = reactive({
   pledge: "",
   month: ""
 })
+
+const resetBillForm = () => {
+  currentUpdateId.value = undefined
+  formData.roomNum = ""
+  formData.roomSize = ""
+  formData.rent = ""
+  formData.pledge = ""
+  formData.month = ""
+}
 
 const formRules: FormRules = reactive({
   roomNum: [{ required: true, trigger: "blur", message: "请输入房间号" }],
@@ -79,12 +95,6 @@ const handleCreateBill = () => {
 
 }
 
-const resetForm = () => {
-  currentUpdateId.value = undefined
-  formData.roomNum = ""
-  formData.roomSize = ""
-  formData.rent = ""
-}
 //#endregion
 
 //#region 删
@@ -244,7 +254,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="roomNum" label="房间号" align="center" />
           <el-table-column prop="roomSize" label="面积" align="center"/>
-          <el-table-column prop="rent" label="租金" align="center"/>
+          <el-table-column prop="rent" label="月租金" align="center"/>
           <el-table-column prop="tenantName" label="租户" align="center"/>
           <el-table-column prop="tenantPhone" label="手机" align="center"/>
           <el-table-column prop="free" label="状态" align="center" :formatter="statusFormat">       
@@ -286,7 +296,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="roomSize" label="面积" >
           <el-input v-model="formData.roomSize" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="rent" label="租金">
+        <el-form-item prop="rent" label="月租金">
           <el-input v-model="formData.rent" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="tenantName" label="租户姓名" >
@@ -324,8 +334,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="roomSize" label="面积" >
           <el-input v-model="billFormData.roomSize" readonly="true" />
         </el-form-item>
-        <el-form-item prop="rent" label="租金">
-          <el-input v-model="billFormData.rent" readonly="true" />
+        <el-form-item prop="rent" label="实付租金">
+          <el-input v-model="billFormData.rent" />
         </el-form-item>
         <el-form-item prop="tenantName" label="租户姓名" >
           <el-input v-model="billFormData.tenantName" readonly="true" />
@@ -333,7 +343,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="tenantPhone" label="租户手机">
           <el-input v-model="billFormData.tenantPhone" readonly="true" />
         </el-form-item>
-        <el-form-item prop="pledge" label="押金">
+        <el-form-item prop="pledge" label="实付押金">
           <el-input v-model="billFormData.pledge"/>
         </el-form-item>
         <el-form-item prop="month" label="时间">
