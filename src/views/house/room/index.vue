@@ -124,7 +124,7 @@ const handleAddBill = (row: GetRoomData) => {
   billFormData.rent = row.rent
   billFormData.tenantName = row.tenantName
   billFormData.tenantPhone = row.tenantPhone
-  billFormData.free = row.free.toString()
+  billFormData.free = '0'
   billDialogVisible.value = true
 }
 //#endregion
@@ -191,9 +191,11 @@ const freeOptions = [{
 const statusFormat = (row, column) => {
   if (row.free === 1) {
     return '空置'
-  } else  {
+  } else if (row.free === 0) {
     return '已出租'
-  } 
+  } else {
+    return ''
+  }  
 }
 
 
@@ -263,7 +265,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
           <el-table-column fixed="right" label="操作" width="240" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="primary" text bg size="small" @click="handleAddBill(scope.row)">生成账单</el-button>
+              <el-button type="primary" text bg size="small" @click="handleAddBill(scope.row)">出租</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -290,13 +292,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="roomNum" label="房间号" v-if="currentUpdateId === undefined">
-          <el-input v-model="formData.roomNum" placeholder="请输入"/>
+        <el-form-item prop="roomNum" label="房间号">
+          <el-input v-model="formData.roomNum" placeholder="请输入" v-if="currentUpdateId === undefined"/>
         </el-form-item>
-        <el-form-item prop="roomSize" label="面积" >
+        <el-form-item prop="roomSize" label="面积" v-if="currentUpdateId === undefined">
           <el-input v-model="formData.roomSize" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="rent" label="月租金">
+        <el-form-item prop="rent" label="月租金" v-if="currentUpdateId === undefined">
           <el-input v-model="formData.rent" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="tenantName" label="租户姓名" >
@@ -305,16 +307,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="tenantPhone" label="租户手机">
           <el-input v-model="formData.tenantPhone" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="free" label="状态">
-          <el-select v-model="formData.free" clearable placeholder="请选择">
-              <el-option
-                v-for="item in freeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-              </el-option>
-            </el-select>   
-        </el-form-item>
+
       </el-form>
 
       <template #footer>
@@ -343,6 +336,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="tenantPhone" label="租户手机">
           <el-input v-model="billFormData.tenantPhone" readonly="true" />
         </el-form-item>
+        <el-form-item prop="free" label="状态">
+          <el-select v-model="billFormData.free" clearable placeholder="请选择">
+              <el-option
+                v-for="item in freeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>   
+        </el-form-item>
         <el-form-item prop="pledge" label="实付押金">
           <el-input v-model="billFormData.pledge"/>
         </el-form-item>
@@ -355,7 +358,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
 
       <template #footer>
         <el-button @click="billDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateBill">确认</el-button>
+        <el-button type="primary" @click="handleCreateBill">生成账单</el-button>
       </template>
     </el-dialog>
   </div>
