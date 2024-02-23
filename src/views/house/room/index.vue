@@ -2,7 +2,7 @@
 import { reactive, ref, watch } from "vue"
 import { getRoomDataApi,createRoomDataApi,updateRoomDataApi } from "@/api/room"
 import { type GetRoomData } from "@/api/room/types/room"
-import { createBillDataApi, getBillDataApi } from "@/api/bill"
+import { createBillDataApi, getPledgeDataApi } from "@/api/bill"
 import { type GetBillData } from "@/api/bill/types/bill"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
@@ -78,6 +78,10 @@ const handleCreate = () => {
             roomDialogVisible.value = false
           })
       } else {
+        if (formData.free == '0') {
+          ElMessage.success("房间已经出租，无法修改")
+          return
+        }
         updateRoomDataApi({
           id: currentUpdateId.value,
           roomSize: formData.roomSize,
@@ -157,6 +161,8 @@ const handleAddBill = (row: GetRoomData) => {
   billFormData.roomSize = row.roomSize
   billFormData.originalRent = row.rent
   billFormData.actualRent = row.rent
+  billFormData.originalPledge = row.pledge
+  billFormData.actualPledge = row.pledge
   billFormData.tenantName = row.tenantName
   billFormData.tenantPhone = row.tenantPhone
   billFormData.free = '0'
@@ -200,8 +206,10 @@ const handleQuit = (row: GetRoomData) => {
 
 // 查询已付押金
 const handleGetBill = () => {
-  getBillDataApi({"roomId": quitFormData.roomId})
-      .then((res) => {
+  getPledgeDataApi({
+    "roomId": quitFormData.roomId,
+    "tenantPhone": quitFormData.tenantPhone
+    }).then((res) => {
         if (res.data.list.length > 0) {
           quitFormData.actualPledge = res.data.list[0].actualPledge
         }
@@ -215,8 +223,14 @@ const handleGetBill = () => {
 const handleQuitBill = () => {
     createBillDataApi({
       "roomId": quitFormData.roomId,
+      "roomSize": quitFormData.roomSize,
+      "tenantName": quitFormData.tenantName,
+      "tenantPhone": quitFormData.tenantPhone,
+      "actualRent": quitFormData.actualRent,
+      "actualPledge": quitFormData.actualPledge,
       "returnRent": quitFormData.returnRent,
       "returnPledge": quitFormData.returnPledge,
+      "billMonth": quitFormData.billMonth,
       "op": 0
     })
       .then(() => {
@@ -224,7 +238,7 @@ const handleQuitBill = () => {
         getRoomData()
       })
       .finally(() => {
-        billDialogVisible.value = false
+        quitDialogVisible.value = false
       })
 }
 
@@ -459,8 +473,11 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
               </el-option>
             </el-select>   
         </el-form-item>
-        <el-form-item prop="pledge" label="实付押金">
-          <el-input v-model="billFormData.pledge"/>
+        <el-form-item prop="originalPledge" label="应付押金">
+          <el-input v-model="billFormData.originalPledge"/>
+        </el-form-item>
+        <el-form-item prop="actualPledge" label="实付押金">
+          <el-input v-model="billFormData.actualPledge"/>
         </el-form-item>
         <el-form-item prop="month" label="时间">
           <el-date-picker v-model="billFormData.billMonth" 

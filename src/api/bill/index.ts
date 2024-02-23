@@ -21,8 +21,17 @@ export function updateBillDataApi(data: Bill.UpdateBillRequestData) {
 
 /** 查 */
 export function getBillDataApi(params: Bill.GetBillRequestData) {
-  return request<Bill.GetBuildingResponseData>({
+  return request<Bill.GetBillResponseData>({
     url: "bill",
+    method: "get",
+    params
+  })
+}
+
+/** 查 */
+export function getPledgeDataApi(params: Bill.GetPledgeRequestData) {
+  return request<Bill.GetBillResponseData>({
+    url: "queryActualPledge",
     method: "get",
     params
   })

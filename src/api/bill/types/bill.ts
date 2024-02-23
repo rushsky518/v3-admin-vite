@@ -29,6 +29,14 @@ export interface GetBillRequestData {
   roomId?: string
   /** 查询参数：手机号 */
   tenantPhone?: string
+  pledge?: boolean
+}
+
+export interface GetPledgeRequestData {
+  /** 查询参数：房间 id */
+  roomId?: string
+  /** 查询参数：手机号 */
+  tenantPhone?: string
 }
 
 export interface GetBillData {
@@ -42,12 +50,14 @@ export interface GetBillData {
   debt: number
   originalPledge: number  
   actualPledge: number  
+  returnRent: number
+  returnPledge: number
   tenantName: string
   tenantPhone: string
   billMonth: string
 }
 
-export type GetBuildingResponseData = ApiResponseData<{
+export type GetBillResponseData = ApiResponseData<{
   list: GetBillData[]
   total: number
 }>
