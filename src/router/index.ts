@@ -179,7 +179,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: "tenant-bill",
-        component: () => import("@/views/house/building/index.vue"),
+        component: () => import("@/views/house/bill/tenant-bill.vue"),
         name: "tenantBill",
         meta: {
           title: "租户账单明细",
@@ -187,9 +187,9 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: "tenant-bill",
+        path: "total-bill",
         component: () => import("@/views/house/building/index.vue"),
-        name: "tenantBill",
+        name: "totalBill",
         meta: {
           title: "合计账单",
           keepAlive: true
@@ -233,7 +233,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/menu/menu1",
     name: "Menu",
     meta: {
-      title: "多级路由",
+      title: "配置项目",
       svgIcon: "menu"
     },
     children: [

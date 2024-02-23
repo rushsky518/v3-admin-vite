@@ -24,6 +24,8 @@ export interface GetBuildingData {
   id: string
   buildingNum: number
   rooms: number
+  rentedRooms: number
+  freeRooms: number
   address: string
 }
 

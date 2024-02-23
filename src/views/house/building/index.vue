@@ -150,7 +150,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuil
         <el-table :data="buildingData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="buildingNum" label="楼栋号" align="center" />
-          <el-table-column prop="rooms" label="房间数" align="center"/>
+          <el-table-column prop="rooms" label="总房间数" align="center"/>
+          <el-table-column prop="rentedRooms" label="已出租房间数" align="center"/>
           <el-table-column prop="freeRooms" label="空置房间数" align="center"/>
           <el-table-column prop="address" label="地址" align="center"/>
           <el-table-column fixed="right" label="操作" width="150" align="center">
