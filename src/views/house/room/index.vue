@@ -54,9 +54,14 @@ const resetBillForm = () => {
   currentUpdateId.value = undefined
   billFormData.roomNum = ""
   billFormData.roomSize = ""
-  billFormData.rent = ""
-  billFormData.pledge = ""
-  billFormData.month = ""
+  billFormData.originalRent = ""
+  billFormData.actualRent = ""
+  billFormData.tenantName = ""
+  billFormData.tenantPhone = ""
+  billFormData.free = ""
+  billFormData.originalPledge = ""
+  billFormData.originalPledge = ""
+  billFormData.billMonth = ""
 }
 
 const formRules: FormRules = reactive({
@@ -479,7 +484,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="actualPledge" label="实付押金">
           <el-input v-model="billFormData.actualPledge"/>
         </el-form-item>
-        <el-form-item prop="month" label="时间">
+        <el-form-item prop="billMonth" label="时间">
           <el-date-picker v-model="billFormData.billMonth" 
             type="month" placeholder="选择月份" :default-value="new Date()">
           </el-date-picker>
