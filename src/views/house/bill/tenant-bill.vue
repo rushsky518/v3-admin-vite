@@ -182,10 +182,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBill
           <el-table-column prop="roomNum" label="房间号" align="center" />
           <el-table-column prop="roomSize" label="面积" align="center"/>
           <el-table-column prop="originalPledge" label="应付押金" align="center"/>
-          <el-table-column prop="actualPledge" label="已付押金" align="center"/>
-          <el-table-column prop="returnPledge" label="退还押金" align="center"/>
           <el-table-column prop="originalRent" label="应付租金" align="center"/>
+          <el-table-column prop="coldWater" label="冷水" align="center"/>
+          <el-table-column prop="hotWater" label="热水" align="center"/>
+          <el-table-column prop="electric" label="电费" align="center"/>
+          <el-table-column prop="network" label="网费" align="center"/>
+          <el-table-column prop="totalRent" label="总计租金" align="center"/>
           <el-table-column prop="actualRent" label="已付租金" align="center"/>
+          <el-table-column prop="returnPledge" label="退还押金" align="center"/>
           <el-table-column prop="returnRent" label="退还租金" align="center"/>
 
           <el-table-column prop="debt" label="欠款" align="center">

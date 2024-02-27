@@ -28,6 +28,7 @@ export interface GetRoomData {
   roomSize: number
   rent: number
   pledge: number
+  network: number
   tenantName: string
   tenantPhone: string
   free: boolean

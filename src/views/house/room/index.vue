@@ -164,10 +164,11 @@ const handleAddBill = (row: GetRoomData) => {
   billFormData.roomId = row.id
   billFormData.roomNum = row.roomNum
   billFormData.roomSize = row.roomSize
-  billFormData.originalRent = row.rent
-  billFormData.actualRent = row.rent
   billFormData.originalPledge = row.pledge
-  billFormData.actualPledge = row.pledge
+  billFormData.originalRent = row.rent
+  billFormData.network = row.network
+  billFormData.totalRent = row.pledge + row.rent 
+  billFormData.actualRent = row.pledge + row.rent 
   billFormData.tenantName = row.tenantName
   billFormData.tenantPhone = row.tenantPhone
   billFormData.free = '0'
@@ -456,8 +457,17 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="roomSize" label="面积" >
           <el-input v-model="billFormData.roomSize" readonly="true" />
         </el-form-item>
-        <el-form-item prop="originalRent" label="应付租金" readonly="true">
+        <el-form-item prop="originalPledge" label="押金">
+          <el-input v-model="billFormData.originalPledge"/>
+        </el-form-item>
+        <el-form-item prop="originalRent" label="租金" readonly="true">
           <el-input v-model="billFormData.originalRent" />
+        </el-form-item>
+        <el-form-item prop="network" label="网费">
+          <el-input v-model="billFormData.network" />
+        </el-form-item>
+        <el-form-item prop="totalRent" label="合计租金">
+          <el-input v-model="billFormData.totalRent" />
         </el-form-item>
         <el-form-item prop="actualRent" label="实付租金">
           <el-input v-model="billFormData.actualRent" />
@@ -478,12 +488,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
               </el-option>
             </el-select>   
         </el-form-item>
-        <el-form-item prop="originalPledge" label="应付押金">
-          <el-input v-model="billFormData.originalPledge"/>
-        </el-form-item>
-        <el-form-item prop="actualPledge" label="实付押金">
-          <el-input v-model="billFormData.actualPledge"/>
-        </el-form-item>
+
         <el-form-item prop="billMonth" label="时间">
           <el-date-picker v-model="billFormData.billMonth" 
             type="month" placeholder="选择月份" :default-value="new Date()">

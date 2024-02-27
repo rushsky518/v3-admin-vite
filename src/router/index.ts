@@ -151,20 +151,11 @@ export const constantRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: "cost-table",
-        component: () => import("@/views/house/building/index.vue"),
-        name: "costTable",
+        path: "resources-table",
+        component: () => import("@/views/house/resources/index.vue"),
+        name: "resourcesTable",
         meta: {
-          title: "成本项",
-          keepAlive: true
-        }
-      },
-      {
-        path: "cost-table",
-        component: () => import("@/views/house/building/index.vue"),
-        name: "costTable",
-        meta: {
-          title: "押金管理",
+          title: "水 电 网",
           keepAlive: true
         }
       },

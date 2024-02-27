@@ -46,10 +46,14 @@ export interface GetBillData {
   roomNum: number
   roomSize: number
   originalRent: number
+  originalPledge: number  
+  coldWater: number
+  hotWater: number
+  electric: number
+  network: number
+  totalRent: number  
   actualRent: number
   debt: number
-  originalPledge: number  
-  actualPledge: number  
   returnRent: number
   returnPledge: number
   tenantName: string
