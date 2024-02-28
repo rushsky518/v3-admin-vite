@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import {  getBuildingDataApi,createBuildingDataApi,updateBuildingDataApi } from "@/api/building"
-import { type GetBuildingData } from "@/api/building/types/building"
+import {  createResourceDataApi, getResourceDataApi, updateResourceDataApi } from "@/api/resource"
+import { type GetResourceData } from "@/api/resource/types/resource"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -30,23 +30,23 @@ const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       if (currentUpdateId.value === undefined) {
-        createBuildingDataApi(formData)
+        createResourceDataApi(formData)
           .then(() => {
             ElMessage.success("新增成功")
-            getBuildingData()
+            getResourceData()
           })
           .finally(() => {
             dialogVisible.value = false
           })
       } else {
-        updateBuildingDataApi({
+        updateResourceDataApi({
           id: currentUpdateId.value,
           rooms: formData.rooms,
           address: formData.address,
         })
           .then(() => {
             ElMessage.success("修改成功")
-            getBuildingData()
+            getResourceData()
           })
           .finally(() => {
             dialogVisible.value = false
@@ -66,13 +66,13 @@ const resetForm = () => {
 //#endregion
 
 //#region 删
-const handleDelete = (row: GetBuildingData) => {
+const handleDelete = (row: GetResourceData) => {
 }
 //#endregion
 
 //#region 改
 const currentUpdateId = ref<undefined | string>(undefined)
-const handleUpdate = (row: GetBuildingData) => {
+const handleUpdate = (row: GetResourceData) => {
   // 点击修改，表单赋初始的值
   currentUpdateId.value = row.id
   formData.buildingNum = row.buildingNum
@@ -84,25 +84,25 @@ const handleUpdate = (row: GetBuildingData) => {
 
 //#region 查
 const handleSearch = () => {
-  paginationData.currentPage === 1 ? getBuildingData() : (paginationData.currentPage = 1)
+  paginationData.currentPage === 1 ? getResourceData() : (paginationData.currentPage = 1)
 }
 
 
-const buildingData = ref<GetBuildingData[]>([])
+const resourceData = ref<GetResourceData[]>([])
 
-const getBuildingData = () => {
+const getResourceData = () => {
   loading.value = true
-  getBuildingDataApi({
+  getResourceDataApi({
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
-    buildingNum: searchData.buildingNum || undefined
+    type: 1
   })
     .then((res) => {
       paginationData.total = res.data.total
-      buildingData.value = res.data.list
+      resourceData.value = res.data.list
     })
     .catch(() => {
-      buildingData.value = []
+      resourceData.value = []
     })
     .finally(() => {
       loading.value = false
@@ -115,29 +115,11 @@ const searchData = reactive({
 })
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuildingData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getResourceData, { immediate: true })
 
 // 时间轴数据
-const getActivities = ((category) => {
-  console.log(category);
-  return [
-          {
-            content: '18 度',
-            time: '2018-02-04',
-          },
-          {
-            content: '28 度',
-            time: '2018-03-03',
-          },
-          {
-            content: '100 度',
-            time: '2018-04-03',
-          },
-          {
-            content: '120 度',
-            time: '2018-05-03',
-          }
-        ]
+const getActivities = ((row: GetResourceData) => {
+  return row.activities;
 });
 
 
@@ -178,9 +160,9 @@ const getActivities = ((category) => {
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="buildingData">
+        <el-table :data="resourceData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="buildingNum" label="楼栋号" width="100" align="center" />
+          <el-table-column prop="roomId" label="房间号" width="100" align="center" />
   
           <el-table-column label="操作" align="center" scope>
             <template #default="scope">
@@ -190,12 +172,12 @@ const getActivities = ((category) => {
                     <el-timeline-item
                       class="lineitem"
                       :class="'active'"
-                      v-for="activity in getActivities(scope.row.buildingNum)"
-                      :timestamp="activity.time"
+                      v-for="activity in getActivities(scope.row)"
+                      :timestamp="activity.valueMonth"
                     >
                       <span style="display: flex; flex-direction: column">
                         <span style="margin: 10px 0; font-size: 16px">
-                          {{ activity.content }}
+                          {{ activity.amount }}
                         </span>
                       </span>
                     </el-timeline-item>

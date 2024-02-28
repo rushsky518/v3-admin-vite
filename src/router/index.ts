@@ -151,9 +151,9 @@ export const constantRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: "resources-table",
-        component: () => import("@/views/house/resources/index.vue"),
-        name: "resourcesTable",
+        path: "resource-table",
+        component: () => import("@/views/house/resource/index.vue"),
+        name: "resourceTable",
         meta: {
           title: "水 电 网",
           keepAlive: true
