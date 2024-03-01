@@ -5,6 +5,7 @@ import { type GetResourceData } from "@/api/resource/types/resource"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+import { format } from "date-fns"
 
 defineOptions({
   // 命名当前组件
@@ -26,11 +27,16 @@ const formRules: FormRules = reactive({
   // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
   // password: [{ required: true, trigger: "blur", message: "请输入密码" }]
 })
+
+const timeZone = "Asia/Shanghai"
+
 const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
-      if (currentUpdateId.value === undefined) {
-        createResourceDataApi(formData)
+      // 日期格式化
+      formData.valueMonth = format(formData.valueMonth, "yyyy-MM-dd", timeZone)
+
+      createResourceDataApi(formData)
           .then(() => {
             ElMessage.success("新增成功")
             getResourceData()
@@ -38,20 +44,6 @@ const handleCreate = () => {
           .finally(() => {
             dialogVisible.value = false
           })
-      } else {
-        updateResourceDataApi({
-          id: currentUpdateId.value,
-          rooms: formData.rooms,
-          address: formData.address,
-        })
-          .then(() => {
-            ElMessage.success("修改成功")
-            getResourceData()
-          })
-          .finally(() => {
-            dialogVisible.value = false
-          })
-      }
     } else {
       console.error("表单校验不通过", fields)
     }
@@ -59,9 +51,11 @@ const handleCreate = () => {
 
 }
 const resetForm = () => {
-  currentUpdateId.value = undefined
-  formData.username = ""
-  formData.password = ""
+  formData.buildingId = ""
+  formData.roomNum = ""
+  formData.valueMonth = ""
+  formData.amount = ""
+  formData.type = ""
 }
 //#endregion
 
@@ -111,7 +105,7 @@ const getResourceData = () => {
 
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  buildingNum: ""
+  type: "1"
 })
 
 /** 监听分页参数的变化 */
@@ -123,14 +117,43 @@ const getActivities = ((row: GetResourceData) => {
 });
 
 
+const typeOptions = [{
+  value: '1',
+  label: '冷水'
+}, {
+  value: '2',
+  label: '热水'
+}, {
+  value: '3',
+  label: '电'
+}]
+
+const buildingOptions = [{
+  value: '1',
+  label: '深圳盐田'
+}, {
+  value: '2',
+  label: '福田华强南'
+}, {
+  value: '3',
+  label: '广州长隆'
+}]
+
 </script>
 
 <template>
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="buildingNum" label="楼栋号">
-          <el-input v-model="searchData.buildingNum" placeholder="请输入" />
+        <el-form-item prop="type" label="类型">
+          <el-select v-model="searchData.type" placeholder="请选择" >
+            <el-option
+              v-for="item in typeOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item prop="buildingNum" label="房间号">
           <el-input v-model="searchData.buildingNum" placeholder="请输入" />
@@ -147,7 +170,7 @@ const getActivities = ((row: GetResourceData) => {
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增楼栋</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增（水 电）示数</el-button>
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -164,7 +187,7 @@ const getActivities = ((row: GetResourceData) => {
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="roomId" label="房间号" width="100" align="center" />
   
-          <el-table-column label="操作" align="center" scope>
+          <el-table-column label="表示数" align="center" scope>
             <template #default="scope">
               <div class="processBox">
                 <div class="timelineProcessBox">
@@ -205,19 +228,39 @@ const getActivities = ((row: GetResourceData) => {
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="currentUpdateId === undefined ? '新增楼栋' : '修改楼栋'"
+      :title="'新增（水电）示数'"
       @close="resetForm"
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="buildingNum" label="楼栋号">
-          <el-input v-model="formData.buildingNum" placeholder="请输入" />
+        <el-form-item prop="buildingId" label="楼栋">
+          <el-select v-model="formData.buildingId" placeholder="请选择" >
+            <el-option
+              v-for="item in buildingOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item prop="rooms" label="房间数" >
-          <el-input v-model="formData.rooms" placeholder="请输入" />
+        <el-form-item prop="roomNum" label="房间号">
+          <el-input v-model="formData.roomNum" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="address" label="地址">
-          <el-input v-model="formData.address" placeholder="请输入" />
+        <el-form-item prop="valueMonth" label="时间" >
+          <el-date-picker v-model="formData.valueMonth" type="month" placeholder="请选择时间"/>
+        </el-form-item>
+        <el-form-item prop="amount" label="示数">
+          <el-input v-model="formData.amount" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="type" label="类型">
+          <el-select v-model="formData.type" placeholder="请选择" >
+            <el-option
+              v-for="item in typeOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -260,7 +303,7 @@ const getActivities = ((row: GetResourceData) => {
 
 .processBox {
   background-color: #fff;
-  height: 210px;
+  height: 100px;
  
   .title {
     font-size: 16px;
@@ -271,11 +314,11 @@ const getActivities = ((row: GetResourceData) => {
   .timelineProcessBox {
     .timeline {
       display: flex;
-      width: 95%;
-      margin: 40px auto;
+      width: 100%;
+      margin: 10px auto;
       .lineitem {
-        transform: translateX(50%);
-        width: 25%;
+        transform: translateX(10%);
+        width: 10%;
       }
     }
   }
@@ -291,7 +334,7 @@ const getActivities = ((row: GetResourceData) => {
 :deep(.el-timeline-item__wrapper) {
   padding-left: 0;
   position: absolute;
-  top: 20px;
+  top: 15px;
   transform: translateX(-50%);
   text-align: center;
 }
