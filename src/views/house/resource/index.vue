@@ -6,6 +6,7 @@ import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "elem
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { format } from "date-fns"
+import { typeOptions, buildingOptions } from "@/views/house/common"
 
 defineOptions({
   // 命名当前组件
@@ -89,7 +90,9 @@ const getResourceData = () => {
   getResourceDataApi({
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
-    type: 1
+    type: searchData.type,
+    buildingId: searchData.buildingId,
+    roomNum: searchData.roomNum
   })
     .then((res) => {
       paginationData.total = res.data.total
@@ -105,8 +108,16 @@ const getResourceData = () => {
 
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  type: "1"
+  type: "1",
+  buildingId: undefined,
+  roomNum: undefined
 })
+
+const resetSearch = () => {
+  searchData.type = "1"
+  searchData.buildingId = undefined
+  searchData.roomNum = undefined
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getResourceData, { immediate: true })
@@ -116,28 +127,6 @@ const getActivities = ((row: GetResourceData) => {
   return row.activities;
 });
 
-
-const typeOptions = [{
-  value: '1',
-  label: '冷水'
-}, {
-  value: '2',
-  label: '热水'
-}, {
-  value: '3',
-  label: '电'
-}]
-
-const buildingOptions = [{
-  value: '1',
-  label: '深圳盐田'
-}, {
-  value: '2',
-  label: '福田华强南'
-}, {
-  value: '3',
-  label: '广州长隆'
-}]
 
 </script>
 
@@ -155,12 +144,22 @@ const buildingOptions = [{
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item prop="buildingNum" label="房间号">
-          <el-input v-model="searchData.buildingNum" placeholder="请输入" />
+
+        <el-form-item prop="buildingId" label="楼栋">
+          <el-select v-model="searchData.buildingId" placeholder="请选择" clearable>
+            <el-option
+              v-for="item in buildingOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item prop="buildingNum" label="类型">
-          <el-input v-model="searchData.buildingNum" placeholder="请输入" />
+
+        <el-form-item prop="roomNum" label="房间号">
+          <el-input v-model="searchData.roomNum" placeholder="请输入" />
         </el-form-item>
+
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
@@ -243,15 +242,6 @@ const buildingOptions = [{
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item prop="roomNum" label="房间号">
-          <el-input v-model="formData.roomNum" placeholder="请输入" />
-        </el-form-item>
-        <el-form-item prop="valueMonth" label="时间" >
-          <el-date-picker v-model="formData.valueMonth" type="month" placeholder="请选择时间"/>
-        </el-form-item>
-        <el-form-item prop="amount" label="示数">
-          <el-input v-model="formData.amount" placeholder="请输入" />
-        </el-form-item>
         <el-form-item prop="type" label="类型">
           <el-select v-model="formData.type" placeholder="请选择" >
             <el-option
@@ -262,6 +252,16 @@ const buildingOptions = [{
             </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item prop="valueMonth" label="时间" >
+          <el-date-picker v-model="formData.valueMonth" type="month" placeholder="请选择时间"/>
+        </el-form-item>
+        <el-form-item prop="roomNum" label="房间号">
+          <el-input v-model="formData.roomNum" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="amount" label="示数">
+          <el-input v-model="formData.amount" placeholder="请输入" />
+        </el-form-item>
+
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
