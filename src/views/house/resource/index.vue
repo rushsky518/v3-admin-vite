@@ -19,11 +19,14 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 //#region 增
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
+
 const formData = reactive({
   buildingNum: "",
   rooms: "",
-  address: ""
+  address: "",
+  list:[]
 })
+
 const formRules: FormRules = reactive({
   // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
   // password: [{ required: true, trigger: "blur", message: "请输入密码" }]
@@ -123,10 +126,21 @@ const resetSearch = () => {
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getResourceData, { immediate: true })
 
 // 时间轴数据
-const getActivities = ((row: GetResourceData) => {
+const getActivities = (row: GetResourceData) => {
   return row.activities;
-});
+}
 
+
+const addRow = () => {
+  for (let i = 0; i < 5; i ++) {
+    let index = formData.list.length;
+    formData.list.push({
+      key: index,
+      roomNum:'',
+      amount:''
+    });
+  }
+}
 
 </script>
 
@@ -229,48 +243,70 @@ const getActivities = ((row: GetResourceData) => {
       v-model="dialogVisible"
       :title="'新增（水电）示数'"
       @close="resetForm"
-      width="30%"
+      width="40%"
     >
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="buildingId" label="楼栋">
-          <el-select v-model="formData.buildingId" placeholder="请选择" >
-            <el-option
-              v-for="item in buildingOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item prop="type" label="类型">
-          <el-select v-model="formData.type" placeholder="请选择" >
-            <el-option
-              v-for="item in typeOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item prop="valueMonth" label="时间" >
-          <el-date-picker v-model="formData.valueMonth" type="month" placeholder="请选择时间"/>
-        </el-form-item>
-        <el-form-item prop="roomNum" label="房间号">
-          <el-input v-model="formData.roomNum" placeholder="请输入" />
-        </el-form-item>
-        <el-form-item prop="amount" label="示数">
-          <el-input v-model="formData.amount" placeholder="请输入" />
-        </el-form-item>
 
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
+        <el-form-item prop="type" label="类型">
+            <el-select v-model="formData.type" placeholder="请选择" >
+              <el-option
+                v-for="item in typeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item prop="buildingId" label="楼栋">
+            <el-select v-model="formData.buildingId" placeholder="请选择" >
+              <el-option
+                v-for="item in buildingOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-form-item prop="valueMonth" label="时间" >
+            <el-date-picker v-model="formData.valueMonth" type="month" placeholder="请选择时间"/>
+          </el-form-item>
+
+          <el-table :data="formData.list">
+            <el-table-column align="center" type="index" label="序号" width="60"/>
+
+            <el-table-column align="center" label="房间号">
+              <template #default="scope">
+                <!--表格里面嵌套表单-->
+                <el-form-item :prop="scope.$index + '.roomNum'">
+                  <el-input
+                  v-model="formData.list[scope.$index].roomNum"
+                  placeholder="房间号"
+                  ></el-input>
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" label="示数">
+              <template #default="scope">
+                <!--表格里面嵌套表单-->
+                <el-form-item :prop="scope.$index + '.amount'">
+                  <el-input
+                  v-model="formData.list[scope.$index].amount"
+                  placeholder="数值"
+                  ></el-input>
+                </el-form-item>
+              </template>
+            </el-table-column>
+          </el-table>
       </el-form>
+      
       <template #footer>
+        <el-button @click="addRow">新增</el-button>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
       </template>
     </el-dialog>
   </div>
-
-
 
 </template>
 
