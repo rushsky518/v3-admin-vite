@@ -17,15 +17,29 @@ const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 //#region 增
-const dialogVisible = ref<boolean>(false)
+const insertDialogVisible = ref<boolean>(false)
+const updateDialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 
-const formData = reactive({
+const insertFormData = reactive({
+  type: "",
   buildingNum: "",
-  rooms: "",
-  address: "",
-  list:[]
+  valueMonth: "",
+  list:[{      
+      key: 0,
+      roomNum:'',
+      amount:''
+    }]
 })
+
+const updateFormData = reactive({
+  type: "",
+  buildingId: "",
+  valueMonth: "",    
+  roomNum:'',
+  amount:''
+})
+
 
 const formRules: FormRules = reactive({
   // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
@@ -38,15 +52,15 @@ const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       // 日期格式化
-      formData.valueMonth = format(formData.valueMonth, "yyyy-MM-dd", timeZone)
+      insertFormData.valueMonth = format(insertFormData.valueMonth, "yyyy-MM-dd", timeZone)
 
-      createResourceDataApi(formData)
+      createResourceDataApi(insertFormData)
           .then(() => {
             ElMessage.success("新增成功")
             getResourceData()
           })
           .finally(() => {
-            dialogVisible.value = false
+            insertDialogVisible.value = false
           })
     } else {
       console.error("表单校验不通过", fields)
@@ -55,11 +69,14 @@ const handleCreate = () => {
 
 }
 const resetForm = () => {
-  formData.buildingId = ""
-  formData.roomNum = ""
-  formData.valueMonth = ""
-  formData.amount = ""
-  formData.type = ""
+  insertFormData.buildingId = ""
+  insertFormData.valueMonth = ""
+  insertFormData.type = ""
+  insertFormData.list= [{      
+      key: 0,
+      roomNum:'',
+      amount:''
+    }]
 }
 //#endregion
 
@@ -69,14 +86,13 @@ const handleDelete = (row: GetResourceData) => {
 //#endregion
 
 //#region 改
-const currentUpdateId = ref<undefined | string>(undefined)
+
 const handleUpdate = (row: GetResourceData) => {
-  // 点击修改，表单赋初始的值
-  currentUpdateId.value = row.id
-  formData.buildingNum = row.buildingNum
-  formData.rooms = row.rooms
-  formData.address = row.address
-  dialogVisible.value = true
+  updateDialogVisible.value = true
+  updateFormData.roomId = row.roomId
+  updateFormData.type = String(row.type)
+  updateFormData.buildingId = String(row.buildingId)
+  updateFormData.roomNum = row.roomNum
 }
 //#endregion
 
@@ -132,15 +148,28 @@ const getActivities = (row: GetResourceData) => {
 
 
 const addRow = () => {
-  for (let i = 0; i < 5; i ++) {
-    let index = formData.list.length;
-    formData.list.push({
-      key: index,
-      roomNum:'',
-      amount:''
-    });
-  }
+  let index = insertFormData.list.length;
+  insertFormData.list.push({
+    key: index,
+    roomNum:'',
+    amount:''
+  });
 }
+
+const deleteRow = (index: number) => {
+  insertFormData.list.splice(index, 1)
+}
+
+const typeFormat = (row, column) => {
+  if (row.type === 1) {
+    return '冷水'
+  } else if (row.type === 2) {
+    return '热水'
+  } else {
+    return '电'
+  }  
+}
+
 
 </script>
 
@@ -183,7 +212,7 @@ const addRow = () => {
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增（水 电）示数</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="insertDialogVisible = true">新增（水 电）示数</el-button>
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -191,14 +220,16 @@ const addRow = () => {
             <el-button type="primary" :icon="Download" circle />
           </el-tooltip>
           <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="getRoomData" />
+            <el-button type="primary" :icon="RefreshRight" circle @click="getResourceData" />
           </el-tooltip>
         </div>
       </div>
       <div class="table-wrapper">
         <el-table :data="resourceData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="roomId" label="房间号" width="100" align="center" />
+          <el-table-column prop="roomId" label="房间 id" width="100" align="center" v-if="false"/>
+          <el-table-column prop="roomNum" label="房间号" width="100" align="center" />
+          <el-table-column prop="type" label="类型" width="100" align="center" :formatter="typeFormat"/>
   
           <el-table-column label="表示数" align="center" scope>
             <template #default="scope">
@@ -223,7 +254,13 @@ const addRow = () => {
             </div>
           </template>
           </el-table-column>
+          <el-table-column label="操作" width="150" align="center">
+            <template #default="scope">
+              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+            </template>
+          </el-table-column>
         </el-table>
+
       </div>
       <div class="pager-wrapper">
         <el-pagination
@@ -240,15 +277,15 @@ const addRow = () => {
     </el-card>
     <!-- 新增/修改 -->
     <el-dialog
-      v-model="dialogVisible"
+      v-model="insertDialogVisible"
       :title="'新增（水电）示数'"
       @close="resetForm"
       width="40%"
     >
 
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
+      <el-form ref="formRef" :model="insertFormData" :rules="formRules" label-width="auto" label-position="left">
         <el-form-item prop="type" label="类型">
-            <el-select v-model="formData.type" placeholder="请选择" >
+            <el-select v-model="insertFormData.type" placeholder="请选择" >
               <el-option
                 v-for="item in typeOptions"
                 :key="item.value"
@@ -258,7 +295,7 @@ const addRow = () => {
             </el-select>
           </el-form-item>
           <el-form-item prop="buildingId" label="楼栋">
-            <el-select v-model="formData.buildingId" placeholder="请选择" >
+            <el-select v-model="insertFormData.buildingId" placeholder="请选择" >
               <el-option
                 v-for="item in buildingOptions"
                 :key="item.value"
@@ -269,41 +306,86 @@ const addRow = () => {
           </el-form-item>
 
           <el-form-item prop="valueMonth" label="时间" >
-            <el-date-picker v-model="formData.valueMonth" type="month" placeholder="请选择时间"/>
+            <el-date-picker v-model="insertFormData.valueMonth" type="month" placeholder="请选择时间"/>
           </el-form-item>
 
-          <el-table :data="formData.list">
-            <el-table-column align="center" type="index" label="序号" width="60"/>
+          <el-button @click="addRow">新增一行</el-button>
+          <el-table :data="insertFormData.list" border stripe 
+            :header-cell-style="{ 'text-align': 'center' }"
+            :cell-style="{ 'text-align': 'center' }">
+            <el-table-column type="index" label="序号"/>
 
-            <el-table-column align="center" label="房间号">
+            <el-table-column label="房间号">
               <template #default="scope">
-                <!--表格里面嵌套表单-->
-                <el-form-item :prop="scope.$index + '.roomNum'">
-                  <el-input
-                  v-model="formData.list[scope.$index].roomNum"
-                  placeholder="房间号"
-                  ></el-input>
+                <el-form-item :prop="scope.$index + '.roomNum'" >
+                  <el-input v-model="insertFormData.list[scope.$index].roomNum" ></el-input>
                 </el-form-item>
               </template>
             </el-table-column>
-            <el-table-column align="center" label="示数">
+            <el-table-column label="示数">
               <template #default="scope">
-                <!--表格里面嵌套表单-->
                 <el-form-item :prop="scope.$index + '.amount'">
-                  <el-input
-                  v-model="formData.list[scope.$index].amount"
-                  placeholder="数值"
-                  ></el-input>
+                  <el-input v-model="insertFormData.list[scope.$index].amount" ></el-input>
                 </el-form-item>
               </template>
             </el-table-column>
+
+            <el-table-column label="操作">
+              <template #default="scope">
+                <el-button type="danger" text bg size="small" @click="deleteRow(scope.$index)">删除</el-button>
+              </template>
+          </el-table-column>
           </el-table>
       </el-form>
       
       <template #footer>
-        <el-button @click="addRow">新增</el-button>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="insertDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="updateDialogVisible"
+      :title="'修改（水电）示数'"
+      @close="resetForm"
+      width="40%"
+    >
+
+      <el-form ref="formRef" :model="updateFormData" :rules="formRules" label-width="auto" label-position="left">
+        
+        <el-form-item prop="type" label="类型">
+          <el-select v-model="updateFormData.type" placeholder="请选择" :disabled="true">
+              <el-option
+                v-for="item in typeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item prop="buildingId" label="楼栋">
+          <el-select v-model="updateFormData.buildingId" placeholder="请选择" :disabled="true">
+              <el-option
+                v-for="item in buildingOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item prop="roomNum" label="房间号">
+          <el-input v-model="updateFormData.roomNum" placeholder="请输入" readonly="true" />
+        </el-form-item>
+        <el-form-item prop="amout" label="示数">
+          <el-input v-model="updateFormData.amout" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="valueMonth" label="时间" >
+          <el-date-picker v-model="updateFormData.valueMonth" type="month" placeholder="请选择时间"/>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="updateDialogVisible = false">取消</el-button>
       </template>
     </el-dialog>
   </div>

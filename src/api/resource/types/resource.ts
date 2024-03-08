@@ -35,7 +35,9 @@ export interface Activity {
 }
 
 export interface GetResourceData {
+  buildingId: Number
   roomId: Number
+  roomNum: string
   activities: Activity[]
   type: string
 }
