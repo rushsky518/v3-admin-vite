@@ -61,8 +61,10 @@ const handleCreate = () => {
 }
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.username = ""
-  formData.password = ""
+
+  for (let key in formData) {
+    formData[key] = ""  
+  }
 }
 //#endregion
 
