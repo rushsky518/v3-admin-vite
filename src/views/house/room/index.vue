@@ -38,6 +38,7 @@ const resetForm = () => {
   formData.pledge = ""
   formData.tenantName = ""
   formData.tenantPhone = ""
+  formData.network = false
 }
 
 const billFormRef = ref<FormInstance | null>(null)
@@ -83,26 +84,48 @@ const handleCreate = () => {
             roomDialogVisible.value = false
           })
       } else {
-        if (formData.free == '0') {
-          ElMessage.success("房间已经出租，无法修改")
-          return
-        }
-        updateRoomDataApi({
-          id: currentUpdateId.value,
-          roomSize: formData.roomSize,
-          rent: formData.rent,
-          pledge: formData.pledge,
-          tenantName: formData.tenantName,
-          tenantPhone: formData.tenantPhone,
-          free: formData.free
-        })
+
+        ElMessageBox.confirm(
+          '确定提交吗?',
+          '警告',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+            draggable: true,
+          }
+        )
           .then(() => {
-            ElMessage.success("修改成功")
-            getRoomData()
+            updateRoomDataApi({
+              id: currentUpdateId.value,
+              roomSize: formData.roomSize,
+              rent: formData.rent,
+              pledge: formData.pledge,
+              tenantName: formData.tenantName,
+              tenantPhone: formData.tenantPhone,
+              free: formData.free,
+              network: formData.network == true ? 1 : 0
+            })
+              .then(() => {
+                ElMessage.success("修改成功")
+                getRoomData()
+              })
+
           })
+          .catch(() => {
+            ElMessage({
+              type: '通知',
+              message: '取消提交',
+            })
+          }) 
           .finally(() => {
             roomDialogVisible.value = false
           })
+
+        // if (formData.free == '0') {
+        //   ElMessage.success("房间已经出租，无法修改")
+        //   return
+        // }
       }
     } else {
       console.error("表单校验不通过", fields)
@@ -155,6 +178,7 @@ const handleUpdate = (row: GetRoomData) => {
   formData.tenantName = row.tenantName
   formData.tenantPhone = row.tenantPhone
   formData.free = row.free.toString()
+  formData.network = row.network == 1 ? true : false
   roomDialogVisible.value = true
 }
 
@@ -436,12 +460,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="tenantPhone" label="租户手机">
           <el-input v-model="formData.tenantPhone" placeholder="请输入" />
         </el-form-item>
-
+        <el-form-item prop="network" label="开通网络">
+          <el-switch v-model="formData.network" />
+        </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="roomDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">确认</el-button>
+        <el-button type="primary" @click="handleCreate">提交</el-button>
       </template>
     </el-dialog>
 

@@ -19,7 +19,8 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 //#region 增
 const insertDialogVisible = ref<boolean>(false)
 const updateDialogVisible = ref<boolean>(false)
-const formRef = ref<FormInstance | null>(null)
+const insertFormRef = ref<FormInstance | null>(null)
+const updateFormRef = ref<FormInstance | null>(null)
 
 const insertFormData = reactive({
   type: "",
@@ -49,7 +50,7 @@ const formRules: FormRules = reactive({
 const timeZone = "Asia/Shanghai"
 
 const handleCreate = () => {
-  formRef.value?.validate((valid: boolean, fields) => {
+  insertFormRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       // 日期格式化
       insertFormData.valueMonth = format(insertFormData.valueMonth, "yyyy-MM-dd", timeZone)
@@ -68,6 +69,7 @@ const handleCreate = () => {
   })
 
 }
+
 const resetForm = () => {
   insertFormData.buildingId = ""
   insertFormData.valueMonth = ""
@@ -78,7 +80,13 @@ const resetForm = () => {
       amount:''
     }]
 }
-//#endregion
+
+const resetUpdateForm = () => {
+  updateFormData.roomId = ""
+  updateFormData.roomNum = ""
+  updateFormData.amount = ""
+  updateFormData.valueMonth = ""
+}
 
 //#region 删
 const handleDelete = (row: GetResourceData) => {
@@ -88,13 +96,33 @@ const handleDelete = (row: GetResourceData) => {
 //#region 改
 
 const handleUpdate = (row: GetResourceData) => {
-  updateDialogVisible.value = true
+  updateDialogVisible.value = Boolean(true)
   updateFormData.roomId = row.roomId
   updateFormData.type = String(row.type)
   updateFormData.buildingId = String(row.buildingId)
   updateFormData.roomNum = row.roomNum
+  // 取出最新的示数
+  if (row.activities.length > 0) {
+    const elem = row.activities[row.activities.length - 1]
+    updateFormData.valueMonth = elem.valueMonth
+    updateFormData.amount = elem.amount
+  }
 }
-//#endregion
+
+const handleUpdateReq = () => {
+    // 日期格式化
+    updateFormData.valueMonth = format(updateFormData.valueMonth, "yyyy-MM-dd", timeZone)
+
+    updateResourceDataApi(updateFormData)
+        .then(() => {
+          ElMessage.success("修改成功")
+          getResourceData()
+        })
+        .finally(() => {
+          updateDialogVisible.value = false
+        })
+
+}
 
 //#region 查
 const handleSearch = () => {
@@ -275,15 +303,14 @@ const typeFormat = (row, column) => {
         />
       </div>
     </el-card>
-    <!-- 新增/修改 -->
+    <!-- 新增 -->
     <el-dialog
       v-model="insertDialogVisible"
       :title="'新增（水电）示数'"
       @close="resetForm"
       width="40%"
     >
-
-      <el-form ref="formRef" :model="insertFormData" :rules="formRules" label-width="auto" label-position="left">
+      <el-form ref="insertFormRef" :model="insertFormData" :rules="formRules" label-width="auto" label-position="left">
         <el-form-item prop="type" label="类型">
             <el-select v-model="insertFormData.type" placeholder="请选择" >
               <el-option
@@ -306,7 +333,7 @@ const typeFormat = (row, column) => {
           </el-form-item>
 
           <el-form-item prop="valueMonth" label="时间" >
-            <el-date-picker v-model="insertFormData.valueMonth" type="month" placeholder="请选择时间"/>
+            <el-date-picker v-model="insertFormData.valueMonth" type="day" placeholder="请选择时间"/>
           </el-form-item>
 
           <el-button @click="addRow">新增一行</el-button>
@@ -347,11 +374,10 @@ const typeFormat = (row, column) => {
     <el-dialog
       v-model="updateDialogVisible"
       :title="'修改（水电）示数'"
-      @close="resetForm"
+      @close="resetUpdateForm"
       width="40%"
     >
-
-      <el-form ref="formRef" :model="updateFormData" :rules="formRules" label-width="auto" label-position="left">
+      <el-form ref="updateFormRef" :model="updateFormData" :rules="formRules" label-width="auto" label-position="left">
         
         <el-form-item prop="type" label="类型">
           <el-select v-model="updateFormData.type" placeholder="请选择" :disabled="true">
@@ -376,15 +402,16 @@ const typeFormat = (row, column) => {
         <el-form-item prop="roomNum" label="房间号">
           <el-input v-model="updateFormData.roomNum" placeholder="请输入" readonly="true" />
         </el-form-item>
-        <el-form-item prop="amout" label="示数">
-          <el-input v-model="updateFormData.amout" placeholder="请输入" />
+        <el-form-item prop="amount" label="示数">
+          <el-input v-model="updateFormData.amount" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="valueMonth" label="时间" >
-          <el-date-picker v-model="updateFormData.valueMonth" type="month" placeholder="请选择时间"/>
+          <el-date-picker v-model="updateFormData.valueMonth" type="day" placeholder="请选择时间"/>
         </el-form-item>
       </el-form>
       
       <template #footer>
+        <el-button @click="handleUpdateReq">确认</el-button>
         <el-button @click="updateDialogVisible = false">取消</el-button>
       </template>
     </el-dialog>

@@ -155,16 +155,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/house/resource/index.vue"),
         name: "resourceTable",
         meta: {
-          title: "水 电 网",
-          keepAlive: true
-        }
-      },
-      {
-        path: "paid-bill",
-        component: () => import("@/views/house/building/index.vue"),
-        name: "paidBill",
-        meta: {
-          title: "成本账单明细",
+          title: "水表-电表",
           keepAlive: true
         }
       },
@@ -174,6 +165,15 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "tenantBill",
         meta: {
           title: "租户账单明细",
+          keepAlive: true
+        }
+      },
+      {
+        path: "paid-bill",
+        component: () => import("@/views/house/building/index.vue"),
+        name: "paidBill",
+        meta: {
+          title: "成本账单明细",
           keepAlive: true
         }
       },

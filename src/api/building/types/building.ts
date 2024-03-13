@@ -27,6 +27,7 @@ export interface GetBuildingData {
   rentedRooms: number
   freeRooms: number
   address: string
+  rent: number
 }
 
 export type GetBuildingResponseData = ApiResponseData<{

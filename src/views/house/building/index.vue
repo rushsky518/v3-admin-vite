@@ -43,6 +43,7 @@ const handleCreate = () => {
           id: currentUpdateId.value,
           rooms: formData.rooms,
           address: formData.address,
+          rent: formData.rent,
         })
           .then(() => {
             ElMessage.success("修改成功")
@@ -76,6 +77,7 @@ const handleUpdate = (row: GetBuildingData) => {
   // 点击修改，表单赋初始的值
   currentUpdateId.value = row.id
   formData.buildingNum = row.buildingNum
+  formData.rent = row.rent
   formData.rooms = row.rooms
   formData.address = row.address
   dialogVisible.value = true
@@ -150,13 +152,15 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuil
         <el-table :data="buildingData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="buildingNum" label="楼栋号" align="center" />
+          <el-table-column prop="rent" label="租金成本" align="center" />
           <el-table-column prop="rooms" label="总房间数" align="center"/>
           <el-table-column prop="rentedRooms" label="已出租房间数" align="center"/>
           <el-table-column prop="freeRooms" label="空置房间数" align="center"/>
           <el-table-column prop="address" label="地址" align="center"/>
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column fixed="right" label="操作" width="250" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">创建成本账单</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -185,6 +189,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuil
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="buildingNum" label="楼栋号">
           <el-input v-model="formData.buildingNum" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="rent" label="租金成本">
+          <el-input v-model="formData.rent" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="rooms" label="房间数" >
           <el-input v-model="formData.rooms" placeholder="请输入" />
