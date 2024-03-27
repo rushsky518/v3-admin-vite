@@ -4,10 +4,10 @@ import { getRoomDataApi,createRoomDataApi,updateRoomDataApi } from "@/api/room"
 import { type GetRoomData } from "@/api/room/types/room"
 import { createBillDataApi, getPledgeDataApi } from "@/api/bill"
 import { type GetBillData } from "@/api/bill/types/bill"
-import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox, type TableColumnCtx } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { buildingOptions } from "@/views/house/common"
+import { freeOptions, buildingOptions } from "@/views/house/common"
 
 defineOptions({
   // 命名当前组件
@@ -130,6 +130,18 @@ const billRules: FormRules = reactive({
   pledge: [{ required: true, trigger: "blur", message: "请输入押金" }],
   billMonth: [{ required: true, trigger: "blur", message: "请选择月份" }]
 })
+
+const handleCreateAllBill = () => {
+  ElMessageBox.confirm(
+          '请确认所有房间的 “水电” 已录入！',
+          '警告',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+            draggable: true,
+          }).then()
+}
 
 // 创建账单
 const handleCreateBill = () => {
@@ -306,14 +318,6 @@ const resetSearch = () => {
   handleSearch()
 }
 
-const freeOptions = [{
-  value: '0',
-  label: '已出租'
-}, {
-  value: '1',
-  label: '空置'
-}]
-
 
 const statusFormat = (row, column) => {
   if (row.free === 1) {
@@ -331,6 +335,49 @@ function showRed(row) {
       color: "red",
     };
   }
+}
+
+interface SummaryMethodProps<T = GetRoomData> {
+  columns: TableColumnCtx<T>[]
+  data: T[]
+}
+
+const getSummaries = (param: SummaryMethodProps) => {
+  const { columns, data } = param
+  const sums: string[] = []
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = '总'
+      return
+    }
+
+    if (column.property !== 'rent') {
+      return
+    }
+
+    const values = data.map((row) => {
+      if (row['free'] === 1) {
+        return 0
+      } else {
+        return Number(row[column.property])
+      }
+    })
+
+    if (!values.every((value) => Number.isNaN(value))) {
+      sums[index] = `￥ ${values.reduce((prev, curr) => {
+        const value = Number(curr)
+        if (!Number.isNaN(value)) {
+          return prev + curr
+        } else {
+          return prev
+        }
+      }, 0)}`
+    } else {
+      sums[index] = 'N/A'
+    }
+  })
+
+  return sums
 }
 
 /** 监听分页参数的变化 */
@@ -374,6 +421,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
       <div class="toolbar-wrapper">
         <div>
           <el-button type="primary" :icon="CirclePlus" @click="roomDialogVisible = true">新增房间</el-button>
+          <el-button type="warning" color="#626aef" @click="handleCreateAllBill">创建租户账单</el-button>
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -386,7 +434,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :row-style="showRed" :data="roomData">
+        <el-table :row-style="showRed" :data="roomData" stripe
+            :summary-method="getSummaries"
+            show-summary>
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="roomNum" label="房间号" align="center" />
           <el-table-column prop="roomSize" label="面积" align="center"/>

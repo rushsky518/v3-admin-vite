@@ -1,3 +1,5 @@
+// import { buildingOptions } from "@/views/house/common"
+
 // 固定的配置项
 export const typeOptions = [{
   value: '1',
@@ -12,3 +14,10 @@ export const buildingOptions = [{
   label: '深圳西乡盐田'
 }]
 
+export const freeOptions = [{
+  value: '0',
+  label: '已出租'
+}, {
+  value: '1',
+  label: '空置'
+}]
