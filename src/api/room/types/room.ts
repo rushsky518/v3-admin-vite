@@ -31,7 +31,7 @@ export interface GetRoomData {
   network: number
   tenantName: string
   tenantPhone: string
-  free: boolean
+  free: number
 }
 
 export type GetRoomResponseData = ApiResponseData<{

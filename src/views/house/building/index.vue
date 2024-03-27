@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import {  getBuildingDataApi,createBuildingDataApi,updateBuildingDataApi } from "@/api/building"
+import { getBuildingDataApi, createBuildingDataApi, updateBuildingDataApi } from "@/api/building"
+import { createCostBillDataApi } from "@/api/cost-bill"
 import { type GetBuildingData } from "@/api/building/types/building"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+import { format } from "date-fns"
 
 defineOptions({
   // 命名当前组件
@@ -22,6 +24,18 @@ const formData = reactive({
   rooms: "",
   address: ""
 })
+
+const billDialogVisible = ref<boolean>(false)
+const billFormRef = ref<FormInstance | null>(null)
+const billFormData = reactive({
+  buildingNum: "",
+  water: "",
+  electric: "",
+  gas: "",
+  rent: "",
+  network: ""
+})
+
 const formRules: FormRules = reactive({
   // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
   // password: [{ required: true, trigger: "blur", message: "请输入密码" }]
@@ -39,31 +53,54 @@ const handleCreate = () => {
             dialogVisible.value = false
           })
       } else {
-        updateBuildingDataApi({
-          id: currentUpdateId.value,
-          rooms: formData.rooms,
-          address: formData.address,
-          rent: formData.rent,
-        })
-          .then(() => {
-            ElMessage.success("修改成功")
-            getBuildingData()
+        ElMessageBox.confirm(
+          '确定提交吗?',
+          '警告',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+            draggable: true,
           })
+          .then(() => {
+            updateBuildingDataApi({
+              id: currentUpdateId.value,
+              rooms: formData.rooms,
+              address: formData.address,
+              rent: formData.rent,
+            }).then(() => {
+                ElMessage.success("修改成功")
+                getBuildingData()
+              })
+          })
+          .catch(() => {
+            ElMessage({
+              type: '通知',
+              message: '取消提交',
+            })
+          }) 
           .finally(() => {
-            dialogVisible.value = false
+			      dialogVisible.value = false
           })
       }
     } else {
       console.error("表单校验不通过", fields)
     }
   })
-
 }
+
+
 const resetForm = () => {
   currentUpdateId.value = undefined
 
   for (let key in formData) {
     formData[key] = ""  
+  }
+}
+
+const resetBillForm = () => {
+  for (let key in formData) {
+    billFormData[key] = ""  
   }
 }
 //#endregion
@@ -84,9 +121,29 @@ const handleUpdate = (row: GetBuildingData) => {
   formData.address = row.address
   dialogVisible.value = true
 }
-//#endregion
 
-//#region 查
+const handleUpdateBill = (row: GetBuildingData) => {
+  // 点击修改，表单赋初始的值
+  billFormData.buildingId = row.id
+  billFormData.buildingNum = row.buildingNum
+  billFormData.address = row.address
+  billFormData.rent = row.rent
+  billDialogVisible.value = true
+}
+
+const timeZone = "Asia/Shanghai"
+const handleCreateBill = () => {
+  // 日期格式化
+  billFormData.billMonth = format(billFormData.billMonth, "yyyy-MM-dd", timeZone)
+  createCostBillDataApi(billFormData)
+  .then(() => {
+    ElMessage.success("新增成功")
+  })
+  .finally(() => {
+    billDialogVisible.value = false
+  })
+}
+
 const handleSearch = () => {
   paginationData.currentPage === 1 ? getBuildingData() : (paginationData.currentPage = 1)
 }
@@ -117,6 +174,11 @@ const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
   buildingNum: ""
 })
+
+const resetSearch = () => {
+  searchData.buildingNum = ""
+  getBuildingData()
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuildingData, { immediate: true })
@@ -154,15 +216,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuil
         <el-table :data="buildingData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="buildingNum" label="楼栋号" align="center" />
+          <el-table-column prop="address" label="地址" align="center"/>
           <el-table-column prop="rent" label="租金成本" align="center" />
           <el-table-column prop="rooms" label="总房间数" align="center"/>
           <el-table-column prop="rentedRooms" label="已出租房间数" align="center"/>
           <el-table-column prop="freeRooms" label="空置房间数" align="center"/>
-          <el-table-column prop="address" label="地址" align="center"/>
+    
           <el-table-column fixed="right" label="操作" width="250" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">创建成本账单</el-button>
+              <el-button type="primary" text bg size="small" @click="handleUpdateBill(scope.row)">创建成本账单</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -205,6 +268,53 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getBuil
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新增/修改 -->
+    <el-dialog
+      v-model="billDialogVisible"
+      :title="'创建成本账单'"
+      @close="resetBillForm"
+      width="30%"
+    >
+      <el-form ref="billFormRef" :model="billFormData" :rules="formRules" label-width="100px" label-position="left">
+        <el-form-item prop="buildingNum" label="楼栋号">
+          <el-input v-model="billFormData.buildingNum" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="address" label="地址">
+          <el-input v-model="billFormData.address" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="pledge" label="押金">
+          <el-input v-model="billFormData.pledge" placeholder="请输入" />
+        </el-form-item>        
+        <el-form-item prop="rent" label="租金成本">
+          <el-input v-model="billFormData.rent" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="network" label="网费">
+          <el-input v-model="billFormData.network" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="water" label="水费" >
+          <el-input v-model="billFormData.water" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="electric" label="电费">
+          <el-input v-model="billFormData.electric" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="management" label="管理费">
+          <el-input v-model="billFormData.management" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="gas" label="燃气">
+          <el-input v-model="billFormData.gas" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="billMonth" label="时间">
+          <el-date-picker v-model="billFormData.billMonth" 
+            type="month" placeholder="选择月份" :default-value="new Date()">
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="billDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateBill">确认</el-button>
       </template>
     </el-dialog>
   </div>

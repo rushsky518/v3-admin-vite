@@ -169,9 +169,9 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: "paid-bill",
-        component: () => import("@/views/house/building/index.vue"),
-        name: "paidBill",
+        path: "cost-bill",
+        component: () => import("@/views/house/cost-bill/index.vue"),
+        name: "costBill",
         meta: {
           title: "成本账单明细",
           keepAlive: true

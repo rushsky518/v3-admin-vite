@@ -7,7 +7,7 @@ import { type GetBillData } from "@/api/bill/types/bill"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { nextTick } from "process"
+import { buildingOptions } from "@/views/house/common"
 
 defineOptions({
   // 命名当前组件
@@ -32,13 +32,9 @@ const formData = reactive({
 
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.roomNum = ""
-  formData.roomSize = ""
-  formData.rent = ""
-  formData.pledge = ""
-  formData.tenantName = ""
-  formData.tenantPhone = ""
-  formData.network = false
+  for (let key in formData) {
+    formData[key] = ""  
+  }
 }
 
 const billFormRef = ref<FormInstance | null>(null)
@@ -53,16 +49,10 @@ const billFormData = reactive({
 
 const resetBillForm = () => {
   currentUpdateId.value = undefined
-  billFormData.roomNum = ""
-  billFormData.roomSize = ""
-  billFormData.originalRent = ""
-  billFormData.actualRent = ""
-  billFormData.tenantName = ""
-  billFormData.tenantPhone = ""
-  billFormData.free = ""
-  billFormData.originalPledge = ""
-  billFormData.originalPledge = ""
-  billFormData.billMonth = ""
+
+  for (let key in billFormData) {
+    formData[key] = ""  
+  }
 }
 
 const formRules: FormRules = reactive({
@@ -75,6 +65,7 @@ const handleCreate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       if (currentUpdateId.value === undefined) {
+        formData.buildingId = searchData.buildingId
         createRoomDataApi(formData)
           .then(() => {
             ElMessage.success("新增成功")
@@ -103,7 +94,7 @@ const handleCreate = () => {
               pledge: formData.pledge,
               tenantName: formData.tenantName,
               tenantPhone: formData.tenantPhone,
-              free: formData.free,
+              free: formData.onRent == true ? 0 : 1,
               network: formData.network == true ? 1 : 0
             })
               .then(() => {
@@ -177,8 +168,7 @@ const handleUpdate = (row: GetRoomData) => {
   formData.pledge = row.pledge
   formData.tenantName = row.tenantName
   formData.tenantPhone = row.tenantPhone
-  formData.free = row.free.toString()
-  formData.network = row.network == 1 ? true : false
+  formData.onRent = (row.free === 1 ? false : true)
   roomDialogVisible.value = true
 }
 
@@ -212,11 +202,9 @@ const quitFormData = reactive({
 
 const resetQuitForm = () => {
   currentUpdateId.value = undefined
-  quitFormData.roomNum = ""
-  quitFormData.roomSize = ""
-  quitFormData.rent = ""
-  quitFormData.pledge = ""
-  quitFormData.month = ""
+  for (let key in quitFormData) {
+    formData[key] = ""  
+  }
 }
 
 const handleQuit = (row: GetRoomData) => {
@@ -312,21 +300,11 @@ const searchData = reactive({
 
 const resetSearch = () => {
   // searchFormRef.value?.resetFields();
-  searchData.buildingId ='';
-  searchData.roomNum ='';
+  for (let key in searchData) {
+    formData[key] = ""  
+  }
   handleSearch()
 }
-
-const buildingOptions = [{
-  value: '1',
-  label: '深圳盐田'
-}, {
-  value: '2',
-  label: '福田华强南'
-}, {
-  value: '3',
-  label: '广州长隆'
-}]
 
 const freeOptions = [{
   value: '0',
@@ -335,6 +313,7 @@ const freeOptions = [{
   value: '1',
   label: '空置'
 }]
+
 
 const statusFormat = (row, column) => {
   if (row.free === 1) {
@@ -346,6 +325,13 @@ const statusFormat = (row, column) => {
   }  
 }
 
+function showRed(row) {
+  if (row.row.free === 1) {
+    return {
+      color: "red",
+    };
+  }
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoomData, { immediate: true })
@@ -400,7 +386,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="roomData">
+        <el-table :row-style="showRed" :data="roomData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="roomNum" label="房间号" align="center" />
           <el-table-column prop="roomSize" label="面积" align="center"/>
@@ -408,7 +394,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
           <el-table-column prop="pledge" label="押金" align="center"/>
           <el-table-column prop="tenantName" label="租户" align="center"/>
           <el-table-column prop="tenantPhone" label="手机" align="center"/>
-          <el-table-column prop="free" label="状态" align="center" :formatter="statusFormat">       
+          <el-table-column prop="free" label="状态" align="center" :formatter="statusFormat">   
           </el-table-column>
 
           <el-table-column fixed="right" label="操作" width="240" align="center">
@@ -451,17 +437,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="rent" label="月租金">
           <el-input v-model="formData.rent" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="pledge" label="押金">
-          <el-input v-model="formData.pledge" placeholder="请输入" />
-        </el-form-item>
         <el-form-item prop="tenantName" label="租户姓名" >
           <el-input v-model="formData.tenantName" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="tenantPhone" label="租户手机">
           <el-input v-model="formData.tenantPhone" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="network" label="开通网络">
-          <el-switch v-model="formData.network" />
+        <el-form-item prop="onRent" label="已出租">
+          <el-switch v-model="formData.onRent" />
         </el-form-item>
       </el-form>
 
@@ -473,7 +456,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
 
     <!-- 生成账单 -->
     <el-dialog v-model="billDialogVisible"
-      :title="'新增账单'"
+      :title="'出租'"
       @close="resetBillForm"
       width="30%">
       <el-form ref="billFormRef" :model="billFormData" :rules="billRules" label-width="100px" label-position="left">
@@ -488,9 +471,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         </el-form-item>
         <el-form-item prop="originalRent" label="租金" readonly="true">
           <el-input v-model="billFormData.originalRent" />
-        </el-form-item>
-        <el-form-item prop="network" label="网费">
-          <el-input v-model="billFormData.network" />
         </el-form-item>
         <el-form-item prop="totalRent" label="合计租金">
           <el-input v-model="billFormData.totalRent" />
@@ -515,9 +495,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
             </el-select>   
         </el-form-item>
 
-        <el-form-item prop="billMonth" label="时间">
+        <el-form-item prop="billMonth" label="入住时间">
           <el-date-picker v-model="billFormData.billMonth" 
-            type="month" placeholder="选择月份" :default-value="new Date()">
+            type="day" placeholder="选择日期" :default-value="new Date()">
           </el-date-picker>
         </el-form-item>
       </el-form>

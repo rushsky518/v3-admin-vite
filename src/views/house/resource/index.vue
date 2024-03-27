@@ -25,11 +25,11 @@ const updateFormRef = ref<FormInstance | null>(null)
 const insertFormData = reactive({
   type: "",
   buildingNum: "",
-  valueMonth: "",
   list:[{      
       key: 0,
       roomNum:'',
-      amount:''
+      amount:'',
+      valueMonth: ""
     }]
 })
 
@@ -53,7 +53,9 @@ const handleCreate = () => {
   insertFormRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       // 日期格式化
-      insertFormData.valueMonth = format(insertFormData.valueMonth, "yyyy-MM-dd", timeZone)
+      for (let i = 0; i < insertFormData.list.length; i ++) {
+        insertFormData.list[i].valueMonth = format(insertFormData.list[i].valueMonth, "yyyy-MM-dd", timeZone)
+      }
 
       createResourceDataApi(insertFormData)
           .then(() => {
@@ -72,12 +74,12 @@ const handleCreate = () => {
 
 const resetForm = () => {
   insertFormData.buildingId = ""
-  insertFormData.valueMonth = ""
   insertFormData.type = ""
   insertFormData.list= [{      
       key: 0,
       roomNum:'',
-      amount:''
+      amount:'',
+      valueMonth:""
     }]
 }
 
@@ -180,7 +182,8 @@ const addRow = () => {
   insertFormData.list.push({
     key: index,
     roomNum:'',
-    amount:''
+    amount:'',
+    valueMonth:""
   });
 }
 
@@ -332,10 +335,6 @@ const typeFormat = (row, column) => {
             </el-select>
           </el-form-item>
 
-          <el-form-item prop="valueMonth" label="时间" >
-            <el-date-picker v-model="insertFormData.valueMonth" type="day" placeholder="请选择时间"/>
-          </el-form-item>
-
           <el-button @click="addRow">新增一行</el-button>
           <el-table :data="insertFormData.list" border stripe 
             :header-cell-style="{ 'text-align': 'center' }"
@@ -349,6 +348,15 @@ const typeFormat = (row, column) => {
                 </el-form-item>
               </template>
             </el-table-column>
+            
+            <el-table-column label="日期">
+              <template #default="scope">
+                <el-form-item :prop="scope.$index + '.valueMonth'">
+                  <el-date-picker v-model="insertFormData.list[scope.$index].valueMonth" type="day" placeholder="请选择时间"/>
+                </el-form-item>
+              </template>
+            </el-table-column>
+
             <el-table-column label="示数">
               <template #default="scope">
                 <el-form-item :prop="scope.$index + '.amount'">
