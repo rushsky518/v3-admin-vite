@@ -2,12 +2,13 @@
 import { reactive, ref, watch } from "vue"
 import { getRoomDataApi,createRoomDataApi,updateRoomDataApi } from "@/api/room"
 import { type GetRoomData } from "@/api/room/types/room"
-import { createBillDataApi, getPledgeDataApi } from "@/api/bill"
+import { createAllBillDataApi, createBillDataApi, getPledgeDataApi } from "@/api/bill"
 import { type GetBillData } from "@/api/bill/types/bill"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox, type TableColumnCtx } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { freeOptions, buildingOptions } from "@/views/house/common"
+import { format } from "date-fns"
 
 defineOptions({
   // 命名当前组件
@@ -87,6 +88,11 @@ const handleCreate = () => {
           }
         )
           .then(() => {
+            let nullValue = (formData.checkInDate === undefined || formData.checkInDate === null || formData.checkInDate === '')
+            if (!nullValue) {
+              formData.checkInDate = format(formData.checkInDate, "yyyy-MM-dd", "Asia/Shanghai")
+            }
+
             updateRoomDataApi({
               id: currentUpdateId.value,
               roomSize: formData.roomSize,
@@ -95,7 +101,7 @@ const handleCreate = () => {
               tenantName: formData.tenantName,
               tenantPhone: formData.tenantPhone,
               free: formData.onRent == true ? 0 : 1,
-              network: formData.network == true ? 1 : 0
+              checkInDate: formData.checkInDate
             })
               .then(() => {
                 ElMessage.success("修改成功")
@@ -132,15 +138,21 @@ const billRules: FormRules = reactive({
 })
 
 const handleCreateAllBill = () => {
+  const now = format(new Date(), "yyyy-MM-dd", "Asia/Shanghai")
   ElMessageBox.confirm(
-          '请确认所有房间的 “水电” 已录入！',
+          '请确认租期在 ' + now + ' 前的房间 “水电” 已录入！',
           '警告',
           {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning',
             draggable: true,
-          }).then()
+          }).then(() => {
+            createAllBillDataApi({"checkInDate": now})
+            .then(() => {
+            ElMessage.success("新增成功")
+          })
+        })
 }
 
 // 创建账单
@@ -181,6 +193,7 @@ const handleUpdate = (row: GetRoomData) => {
   formData.tenantName = row.tenantName
   formData.tenantPhone = row.tenantPhone
   formData.onRent = (row.free === 1 ? false : true)
+  formData.checkInDate = row.checkInDate
   roomDialogVisible.value = true
 }
 
@@ -439,11 +452,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
             show-summary>
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="roomNum" label="房间号" align="center" />
-          <el-table-column prop="roomSize" label="面积" align="center"/>
+          <el-table-column prop="checkInDate" label="入住时间" align="center"/>
           <el-table-column prop="rent" label="月租金" align="center"/>
           <el-table-column prop="pledge" label="押金" align="center"/>
           <el-table-column prop="tenantName" label="租户" align="center"/>
           <el-table-column prop="tenantPhone" label="手机" align="center"/>
+          <el-table-column prop="roomSize" label="面积" align="center"/>
           <el-table-column prop="free" label="状态" align="center" :formatter="statusFormat">   
           </el-table-column>
 
@@ -493,6 +507,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="tenantPhone" label="租户手机">
           <el-input v-model="formData.tenantPhone" placeholder="请输入" />
         </el-form-item>
+
+        <el-form-item prop="checkInDate" label="入住时间">
+          <el-date-picker v-model="formData.checkInDate" 
+            type="day" placeholder="选择日期" :default-value="new Date()">
+          </el-date-picker>
+        </el-form-item>
+
         <el-form-item prop="onRent" label="已出租">
           <el-switch v-model="formData.onRent" />
         </el-form-item>

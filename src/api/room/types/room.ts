@@ -32,6 +32,7 @@ export interface GetRoomData {
   tenantName: string
   tenantPhone: string
   free: number
+  checkInDate: Date
 }
 
 export type GetRoomResponseData = ApiResponseData<{

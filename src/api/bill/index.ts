@@ -36,3 +36,12 @@ export function getPledgeDataApi(params: Bill.GetPledgeRequestData) {
     params
   })
 }
+
+/** 增 */
+export function createAllBillDataApi(params) {
+  return request({
+    url: "createBill",
+    method: "get",
+    params
+  })
+}
