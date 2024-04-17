@@ -8,7 +8,8 @@ import { type FormInstance, type FormRules, ElMessage, ElMessageBox, type TableC
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { freeOptions, buildingOptions } from "@/views/house/common"
-import { format } from "date-fns"
+import { format, endOfMonth, subMonths, startOfMonth } from "date-fns"
+
 
 defineOptions({
   // 命名当前组件
@@ -52,7 +53,7 @@ const resetBillForm = () => {
   currentUpdateId.value = undefined
 
   for (let key in billFormData) {
-    formData[key] = ""  
+    billFormData[key] = ""  
   }
 }
 
@@ -138,14 +139,23 @@ const billRules: FormRules = reactive({
 })
 
 const handleCreateAllBill = () => {
-  const now = format(new Date(), "yyyy-MM-dd", "Asia/Shanghai")
-  ElMessageBox.confirm(
-          '请确认租期在 ' + now + ' 前的房间 “水电” 已录入！',
+  // 获取当前日期
+  const currentDate = new Date();
+  // 计算上月最后一天
+  const lastDayOfLastMonth = endOfMonth(subMonths(currentDate, 1));
+  // 使用 startOfMonth() 从上月最后一天向前推到上月第一天
+  const firstDayOfLastMonth = startOfMonth(lastDayOfLastMonth);
+  const now = format(firstDayOfLastMonth, "yyyy-MM", "Asia/Shanghai")
+
+  ElMessageBox.prompt(
+          '请选择账期',
           '警告',
           {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning',
+            inputType: 'month',
+            inputValue: now,
             draggable: true,
           }).then(() => {
             createAllBillDataApi({"checkInDate": now})
@@ -159,6 +169,7 @@ const handleCreateAllBill = () => {
 const handleCreateBill = () => {
   billFormRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
+      billFormData.billMonth = format(billFormData.billMonth, "yyyy-MM-dd", "Asia/Shanghai")
       createBillDataApi(billFormData)
           .then(() => {
             ElMessage.success("新增成功")
@@ -202,14 +213,11 @@ const handleAddBill = (row: GetRoomData) => {
   currentUpdateId.value = row.id
   billFormData.roomId = row.id
   billFormData.roomNum = row.roomNum
-  billFormData.roomSize = row.roomSize
   billFormData.originalPledge = row.pledge
   billFormData.originalRent = row.rent
-  billFormData.network = row.network
-  billFormData.totalRent = row.pledge + row.rent 
-  billFormData.actualRent = row.pledge + row.rent 
   billFormData.tenantName = row.tenantName
   billFormData.tenantPhone = row.tenantPhone
+  billFormData.billMonth = new Date()
   billFormData.free = '0'
   billDialogVisible.value = true
 }
@@ -222,7 +230,7 @@ const quitFormData = reactive({
   roomSize: "",
   rent: "",
   pledge: "",
-  month: ""
+  billMonth: ""
 })
 
 const resetQuitForm = () => {
@@ -237,43 +245,27 @@ const handleQuit = (row: GetRoomData) => {
   currentUpdateId.value = row.id
   quitFormData.roomId = row.id
   quitFormData.roomNum = row.roomNum
-  quitFormData.roomSize = row.roomSize
-  quitFormData.originalRent = row.rent
-  quitFormData.actualRent = row.rent
-  handleGetBill()
+  quitFormData.actualPledge = row.pledge
   quitFormData.tenantName = row.tenantName
-  quitFormData.tenantPhone = row.tenantPhone
-  quitFormData.free = '0'
+  quitFormData.coldWater = 0
+  quitFormData.electric = 0
+  quitFormData.returnPledge = 0
+  quitFormData.returnRent = 0
+  quitFormData.billMonth = new Date()
   quitDialogVisible.value = true
-}
-
-// 查询已付押金
-const handleGetBill = () => {
-  getPledgeDataApi({
-    "roomId": quitFormData.roomId,
-    "tenantPhone": quitFormData.tenantPhone
-    }).then((res) => {
-        if (res.data.list.length > 0) {
-          quitFormData.actualPledge = res.data.list[0].actualPledge
-        }
-      })
-      .finally(() => {
-        //
-      })
 }
 
 // 创建退租账单
 const handleQuitBill = () => {
     createBillDataApi({
       "roomId": quitFormData.roomId,
-      "roomSize": quitFormData.roomSize,
       "tenantName": quitFormData.tenantName,
       "tenantPhone": quitFormData.tenantPhone,
-      "actualRent": quitFormData.actualRent,
-      "actualPledge": quitFormData.actualPledge,
+      "coldWater": quitFormData.coldWater,
+      "electric": quitFormData.electric,
       "returnRent": quitFormData.returnRent,
       "returnPledge": quitFormData.returnPledge,
-      "billMonth": quitFormData.billMonth,
+      "billMonth": format(quitFormData.billMonth, "yyyy-MM-dd", "Asia/Shanghai"),
       "op": 0
     })
       .then(() => {
@@ -534,19 +526,19 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
         <el-form-item prop="roomNum" label="房间号">
           <el-input v-model="billFormData.roomNum" readonly="true"/>
         </el-form-item>
-        <el-form-item prop="roomSize" label="面积" >
-          <el-input v-model="billFormData.roomSize" readonly="true" />
-        </el-form-item>
         <el-form-item prop="originalPledge" label="押金">
           <el-input v-model="billFormData.originalPledge"/>
         </el-form-item>
         <el-form-item prop="originalRent" label="租金" readonly="true">
           <el-input v-model="billFormData.originalRent" />
         </el-form-item>
-        <el-form-item prop="totalRent" label="合计租金">
+        <el-form-item prop="brokerage" label="佣金">
+          <el-input v-model="billFormData.brokerage" />
+        </el-form-item>
+        <el-form-item prop="totalRent" label="合计金额">
           <el-input v-model="billFormData.totalRent" />
         </el-form-item>
-        <el-form-item prop="actualRent" label="实付租金">
+        <el-form-item prop="actualRent" label="实付金额">
           <el-input v-model="billFormData.actualRent" />
         </el-form-item>
         <el-form-item prop="tenantName" label="租户姓名" >
@@ -568,7 +560,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
 
         <el-form-item prop="billMonth" label="入住时间">
           <el-date-picker v-model="billFormData.billMonth" 
-            type="day" placeholder="选择日期" :default-value="new Date()">
+            type="date" placeholder="选择日期" :default-value="new Date()">
           </el-date-picker>
         </el-form-item>
       </el-form>
@@ -584,34 +576,31 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getRoom
       :title="'退租'"
       @close="resetQuitForm"
       width="30%">
-      <el-form ref="quitFormRef" :model="quitFormData" :rules="billRules" label-width="100px" label-position="left">
+      <el-form ref="quitFormRef" :model="quitFormData" label-width="100px" label-position="left">
         <el-form-item prop="roomNum" label="房间号">
           <el-input v-model="quitFormData.roomNum" :readonly="true"/>
-        </el-form-item>
-        <el-form-item prop="roomSize" label="面积" >
-          <el-input v-model="quitFormData.roomSize" :readonly="true" />
         </el-form-item>
         <el-form-item prop="tenantName" label="租户姓名" >
           <el-input v-model="quitFormData.tenantName" :readonly="true"/>
         </el-form-item>
-        <el-form-item prop="tenantPhone" label="租户手机" >
-          <el-input v-model="quitFormData.tenantPhone" :readonly="true"/>
-        </el-form-item>
-        <el-form-item prop="actualRent" label="实付租金" >
-          <el-input v-model="quitFormData.actualRent" :readonly="true"/>
-        </el-form-item>
-        <el-form-item prop="returnRent" label="退还租金" >
-          <el-input v-model="quitFormData.returnRent"/>
-        </el-form-item>
         <el-form-item prop="pledge" label="实付押金">
           <el-input v-model="quitFormData.actualPledge" :readonly="true"/>
+        </el-form-item>
+        <el-form-item prop="returnRent" label="待缴纳水费" >
+          <el-input v-model="quitFormData.coldWater"/>
+        </el-form-item>
+        <el-form-item prop="returnRent" label="待缴纳电费" >
+          <el-input v-model="quitFormData.electric"/>
         </el-form-item>
         <el-form-item prop="returnPledge" label="退还押金">
           <el-input v-model="quitFormData.returnPledge"/>
         </el-form-item>
-        <el-form-item prop="month" label="时间">
+        <el-form-item prop="returnRent" label="退还租金" >
+          <el-input v-model="quitFormData.returnRent"/>
+        </el-form-item>
+        <el-form-item prop="billMonth" label="时间">
           <el-date-picker v-model="quitFormData.billMonth" 
-            type="month" placeholder="选择月份" :default-value="new Date()">
+            type="date" placeholder="选择日期" :default-value="new Date()">
           </el-date-picker>
         </el-form-item>
       </el-form>

@@ -29,7 +29,7 @@ const insertFormData = reactive({
       key: 0,
       roomNum:'',
       amount:'',
-      valueMonth: ""
+      valueMonth: new Date
     }]
 })
 
@@ -79,7 +79,7 @@ const resetForm = () => {
       key: 0,
       roomNum:'',
       amount:'',
-      valueMonth:""
+      valueMonth: new Date
     }]
 }
 
@@ -183,7 +183,7 @@ const addRow = () => {
     key: index,
     roomNum:'',
     amount:'',
-    valueMonth:""
+    valueMonth: new Date
   });
 }
 
@@ -311,23 +311,24 @@ const typeFormat = (row, column) => {
       v-model="insertDialogVisible"
       :title="'新增（水电）示数'"
       @close="resetForm"
-      width="40%"
+      width="45%"
     >
       <el-form ref="insertFormRef" :model="insertFormData" :rules="formRules" label-width="auto" label-position="left">
-        <el-form-item prop="type" label="类型">
-            <el-select v-model="insertFormData.type" placeholder="请选择" >
+        <el-form-item prop="buildingId" label="楼栋">
+            <el-select v-model="insertFormData.buildingId" placeholder="请选择" >
               <el-option
-                v-for="item in typeOptions"
+                v-for="item in buildingOptions"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value">
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item prop="buildingId" label="楼栋">
-            <el-select v-model="insertFormData.buildingId" placeholder="请选择" >
+
+        <el-form-item prop="type" label="类型">
+            <el-select v-model="insertFormData.type" placeholder="请选择" >
               <el-option
-                v-for="item in buildingOptions"
+                v-for="item in typeOptions"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value">
